@@ -43,7 +43,7 @@ class Server
 		void	CommandNICK(User *user, std::string message);
 		void	CommandJOIN(User *user, std::string message);
 		void 	CommandJOIN2(User *user, std::string nameChannel, std::string mdp);
-		void	CommandUSER(User *user, std::string message, int passOK);
+		void	CommandUSER(User *user, std::string message);
 		void	CommandNAMES(User *user, Channel *channel);
 		void	CommandPRIVMSG(User *user, std::string message);
 		void	CommandPART(User *user, std::string message);
@@ -61,7 +61,12 @@ class Server
 		void 	ModeT(User *user, Channel *channel, int i);
 		void 	ModeL(User *user, Channel *channel, std::string message, int i);
 
+
+//		COMMAND UTILS
 		bool	isNickAvailable(const std::string& nickname);
+		std::string	exctracteChannelName(const std::string &message);
+		std::string exctracteMdp(const std::string &message);
+		
 		void	timeOut(User *user);
 		void	SendMessage(User *user, Channel *channel, std::string mes);
 		Channel	*FindChannel(std::string search);
