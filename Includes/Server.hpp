@@ -29,6 +29,7 @@ class Server
 		int numConnection;
 
 		std::map<int, User*> UserTab;
+		std::map<std::string, User*> NicknameMap;
 		std::map<std::string, Channel*> ChannelTab;
 		
 		void	HandleMessage(User *user, int num, std::vector<pollfd> client_fds);
@@ -38,7 +39,7 @@ class Server
 		bool	Server_loop();
 
 		void	CommandCAP(User *user);
-		int	CommandPASS(User *user, std::string pass);
+		int		CommandPASS(User *user, std::string pass);
 		void	CommandNICK(User *user, std::string message);
 		void	CommandJOIN(User *user, std::string message);
 		void 	CommandJOIN2(User *user, std::string nameChannel, std::string mdp);
@@ -60,6 +61,7 @@ class Server
 		void 	ModeT(User *user, Channel *channel, int i);
 		void 	ModeL(User *user, Channel *channel, std::string message, int i);
 
+		bool	isNickAvailable(const std::string& nickname);
 		void	timeOut(User *user);
 		void	SendMessage(User *user, Channel *channel, std::string mes);
 		Channel	*FindChannel(std::string search);
