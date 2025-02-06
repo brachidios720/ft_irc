@@ -187,6 +187,170 @@ void    Server::CommandNAMES(User *user, Channel *channel){
     send(user->getSocket(), listefinish.c_str(), listefinish.length(), 0);
 }
 
-void    CommandPRIVMSG(User *user, std::string message){
-    
+void    Server::CommandPRIVMSG(User *user, std::string message){
+
+    std::stringstream ss(message);
+    std::string target, pvt;
+
+    ss << target;
+    getline(ss, pvt);
+
+    if(target.empty()){
+        std::string err = ":user not found\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+    }
+    if(pvt.empty()){
+        std::string err = ":write something to send\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+    }
+    if(target[0] == '#' ){
+        Channel *channel = FindChannel(target);
+        if(!channel){
+            std::string err =  target + " :channel not found\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+        else{
+            std::string reponse = ":" + user->getNickname() + " send PRVTMSG " + target + " :" + pvt.substr(1) + "\r\n" ;
+        }
+    }
+    else{
+        User *targetUser = nullptr;
+        for (std::map<int, User*>::iterator it = UserTab.begin(); it != UserTab.end(); ++it)
+        {
+            if (it->second->getNickname() == target)
+            {
+                targetUser = it->second;
+                break;
+            }
+        }
+        if(targetUser){
+            std::string reponse = ":" + user->getNickname() + " send PRVTMSG " + target + " :" + pvt.substr(1) + "\r\n"; 
+            send(targetUser->getSocket(), reponse.c_str(), reponse.length(), 0);
+        }
+        else {
+            std::string reponse = target + " not found\r\n";
+            send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
+        }
+    }
+
+}
+
+void    Server::CommandPART(User *user, std::string message){
+
+    std::stringstream ss(message);
+    std::string  channelName;
+
+    ss << channelName;
+
+    if(channelName.empty()){
+        std::string rep = ": empty channel name\r\n";
+        send(user->getSocket(), rep.c_str(), rep.length(), 0);
+        return;
+    }
+
+    Channel *channel  = FindChannel(channelName);
+    if(!channel){
+        std::string rep = ": no such channel\r\n";
+        send(user->getSocket(), rep.c_str(), rep.length(), 0);
+        return;
+    }
+
+    if(!channel->IsHere(user)){
+        std::string rep = ": your not in this channel\r\n";
+        send(user->getSocket(), rep.c_str(), rep.length(), 0);
+        return;
+    }
+
+    channel->DelUser(user);
+    user->setChannel("");
+
+    std::string rep = ": " + user->getNickname() + " PART " + channelName + "\r\n";
+    send(user->getSocket(), rep.c_str(), rep.length(), 0);
+}
+
+void    Server::CommandMODE(User *user, std::string message){
+    std::stringstream ss(message);
+    std::string target, mode;
+
+    ss << target << mode;
+
+    if(target.empty()){
+            std::string err = ": no such target\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+    }
+    if(mode.empty()){
+            std::string err = ": no such mode\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+    }
+
+    if(target[0] == '#'){
+        Channel *channel = FindChannel(target);
+        if(!channel){
+            std::string err = ": no such channel\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+        if(mode == "+k" || mode == "-k")
+            ModeK(user, channel, "", (mode == "+k" ? 1 : 0));
+        else if (mode == "+i" || mode == "-i")
+            ModeI(user, channel, (mode == "+i" ? 1 : 0));
+        else if(mode == "+o" || mode == "-o")
+            ModeO(user, channel, "", (mode == "+o" ? 1 : 0));
+        else if(mode == "+t" || mode == "-t")
+            ModeT(user, channel, (mode == "+t" ? 1 : 0));
+        else if(mode == "+l" || mode == "-l")
+            ModeL(user, channel, "", (mode == "+l" ? 1 : 0));
+    }
+    else{
+        if(mode == "+o" || mode == "-o")
+            ModeO(user, nullptr, "", (mode == "+o" ? 1 : 0));
+    }
+}
+
+void    Server::CommandTOPIC(User *user, std::string message){
+        std::stringstream ss(message);
+        std::string channelname , newtopic;
+
+        ss << channelname << newtopic;
+
+        if(channelname.empty()){
+            std::string err = ": no such channel\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+
+        Channel *channel = FindChannel(channelname);
+        if(!channel){
+            std::string err = ": no channel with the name : " + channelname + "\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+        if(newtopic.empty()){
+
+            std::string topic = channel->getTopic();
+            if(topic.empty()){
+                std::string rep = channelname + " : don't have currently topic";
+                send(user->getSocket(), rep.c_str(), rep.length(), 0);
+            }
+            else {
+                std::string rep = channelname + " :" + topic + "\r\n";
+                send(user->getSocket(), rep.c_str(), rep.length(), 0);
+            }
+        }
+        else {
+            if(!channel->isOp(user->getNickname()))
+            {
+                std::string rep = ": you don't have the permission to creat a topic\r\n";
+                send(user->getSocket(), rep.c_str(), rep.length(), 0);
+                return;
+            }
+            else{
+                channel->setTopic(newtopic);
+                std::string rep = ":" + user->getNickname() + " set a new Topic for the " + channelname + ": " + newtopic.substr(1) + "\r\n";
+                channel->SendMsg(user, rep);
+            }
+        }
 }

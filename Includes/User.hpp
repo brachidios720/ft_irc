@@ -30,6 +30,7 @@ class User
 	private :
 		int _isDown;
 		const int _socket;
+		bool	_isregistered;
 		std::string _username;
 		std::string _nickname;
 		std::string _channel;

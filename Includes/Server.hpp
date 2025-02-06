@@ -45,11 +45,11 @@ class Server
 		void 	CommandJOIN2(User *user, std::string nameChannel, std::string mdp);
 		void	CommandUSER(User *user, std::string message);//
 		void	CommandNAMES(User *user, Channel *channel);//
-		void	CommandPRIVMSG(User *user, std::string message);
-		void	CommandPART(User *user, std::string message);
-		void	CommandMODE(User *user, std::string message);
+		void	CommandPRIVMSG(User *user, std::string message);//
+		void	CommandPART(User *user, std::string message);//
+		void	CommandMODE(User *user, std::string message);//
 		void	CommandMODE2(User *user, char channel, int status, std::string supmode, std::string nameChannel);
-		void	CommandTOPIC(User *user, std::string message);
+		void	CommandTOPIC(User *user, std::string message);//
 		void	CommandINVITE(User *user, std::string message);
 		void	CommandKICK(User *user, std::string message);
 		void	CommandPING(User *user, std::string message);//

@@ -19,6 +19,8 @@ class Channel
 		bool getMode(char mode);
 		std::string getPassword(void);
 		bool isEmpty();
+		std::string	getTopic();
+		void	setTopic(std::string topic);
 		int isOp(std::string nickname);
 		void changeOp(std::string nickname, int op);
 		void SetUserLimit(int limit);
@@ -31,6 +33,7 @@ class Channel
 	private :
 		std::string _password;
 		const std::string _name;
+		std::string _topic;
 		std::map<User*, int> UserBook;
 		std::vector<User*> UserInvite;
 		int _userLimit;
