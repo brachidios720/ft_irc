@@ -50,7 +50,7 @@ class Server
 		void	CommandMODE(User *user, std::string message);//
 		void	CommandMODE2(User *user, char channel, int status, std::string supmode, std::string nameChannel);
 		void	CommandTOPIC(User *user, std::string message);//
-		void	CommandINVITE(User *user, std::string message);
+		void	CommandINVITE(User *user, std::string message);//
 		void	CommandKICK(User *user, std::string message);
 		void	CommandPING(User *user, std::string message);//
 		void	CommandQUIT(User *user, std::string message);

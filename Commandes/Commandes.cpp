@@ -354,3 +354,116 @@ void    Server::CommandTOPIC(User *user, std::string message){
             }
         }
 }
+
+void    Server::CommandINVITE(User *user, std::string message){
+
+        std::stringstream ss(message);
+        std::string nickname, channelname;
+        ss << nickname << channelname;
+
+        if(channelname.empty()){
+            std::string err = ": no such channel\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+        if(nickname.empty()){
+            std::string err = ": no such nickname\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+        Channel *channel = FindChannel(channelname);
+        if(!channel){
+            std::string err = ": no channel with the name : " +channelname + "\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+        if(channel->IsHere(user)){
+            std::string err = ": not valid invitation\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+         User *targetUser = nullptr;
+        for (std::map<int, User*>::iterator it = UserTab.begin(); it != UserTab.end(); ++it)
+        {
+            if (it->second->getNickname() == nickname)
+            {
+                targetUser = it->second;
+                break;
+            }
+        }
+        if(!targetUser){
+            std::string err = ":user not found" + nickname + "\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+        if((channel->getMode('i') == true) && !channel->isOp(user->getNickname())){
+            std::string err = ": you are not operator of this channel : " + channelname + "\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+            return;
+        }
+
+        channel->addUserInvite(targetUser);
+        std::string rep = ": " + user->getNickname() + " invite you to join the " + channelname + " channel " + "\r\n";
+        send(targetUser->getSocket(), rep.c_str(), rep.length(), 0);
+        std::string repp = ": " + nickname + " has been received the invitation to the channel : " + channelname + "\r\n"; 
+        send(user->getSocket(), repp.c_str(), repp.length(), 0);
+}
+
+void    Server::CommandKICK(User *user, std::string message){
+    std::stringstream ss(message);
+    std::string channelname, nickname;
+    ss << channelname << nickname;
+
+    if(channelname.empty()){
+        std::string err = ": no such channel\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    if(nickname.empty()){
+        std::string err = ": no such nickname\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    Channel *channel = FindChannel(channelname);
+    if(!channel){
+        std::string err = ": no channel with the name : " +channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    if(!channel->IsHere(user)){
+        std::string err = ": you are not a menber of the channel :" +channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    if(!channel->isOp(user->getNickname())){
+        std::string err = ": you are not operator of this channel : " + channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    User *targetUser = nullptr;
+    for (std::map<int, User*>::iterator it = UserTab.begin(); it != UserTab.end(); ++it)
+    {
+        if (it->second->getNickname() == nickname)
+        {
+            targetUser = it->second;
+            break;
+        }
+    }
+    if(!targetUser){
+        std::string err = ":user not found" + nickname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    if(!channel->IsHere(targetUser)){
+        std::string err =  ": " + targetUser->getNickname() + "is not a menber of the channel :" +channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    channel->DelUser(targetUser);
+
+    std::string rep = ": the user " + targetUser->getNickname() + " has been kicked of the channel by " + user->getNickname() + "\r\n";
+    channel->SendMsg(user, rep);
+    send(targetUser->getSocket(), rep.c_str(), rep.length(), 0);
+}
