@@ -26,6 +26,7 @@ class User
 		void joinbuffCommand(std::string command);
 		void incrementisDown();
 		void setIp(std::string ip);
+		void setIsRegister(bool registered);
 	private :
 		int _isDown;
 		const int _socket;

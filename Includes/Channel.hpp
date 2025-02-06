@@ -26,6 +26,8 @@ class Channel
 		bool isPlace();
 		void addUserInvite(User *user);
 		bool IsInvite(User *user);
+		std::vector<std::string> getUserNicknames();
+
 	private :
 		std::string _password;
 		const std::string _name;
