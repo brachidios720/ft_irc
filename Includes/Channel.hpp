@@ -29,7 +29,11 @@ class Channel
 		void addUserInvite(User *user);
 		bool IsInvite(User *user);
 		std::vector<std::string> getUserNicknames();
-
+		void setInviteOnly(bool status);//
+		bool	isInviteOnly();//
+		bool	isTopicRestricted();//
+		void	setTopicRestricted(bool status);//
+		int		getUserLimite();
 	private :
 		std::string _password;
 		const std::string _name;
@@ -41,4 +45,5 @@ class Channel
 		bool _modeT;
 		bool _modeL;
 		bool _modeI;
+		bool _topicRestricted;//
 };

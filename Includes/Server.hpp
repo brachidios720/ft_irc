@@ -37,7 +37,7 @@ class Server
 		void	ConnectClient();
 		bool 	Server_start();
 		bool	Server_loop();
-
+		void 	RemoveUser(int fd);
 		void	CommandCAP(User *user); //
 		int		CommandPASS(User *user, std::string pass);//
 		void	CommandNICK(User *user, std::string message);//
@@ -51,14 +51,14 @@ class Server
 		void	CommandMODE2(User *user, char channel, int status, std::string supmode, std::string nameChannel);
 		void	CommandTOPIC(User *user, std::string message);//
 		void	CommandINVITE(User *user, std::string message);//
-		void	CommandKICK(User *user, std::string message);
+		void	CommandKICK(User *user, std::string message);//
 		void	CommandPING(User *user, std::string message);//
 		void	CommandQUIT(User *user, std::string message);
 
-		void 	ModeK(User *user, Channel *channel, std::string message, int i);
-		void 	ModeI(User *user, Channel *channel, int i);
-		void 	ModeO(User *user, Channel *channel, std::string message, int i);
-		void 	ModeT(User *user, Channel *channel, int i);
+		void 	ModeK(User *user, Channel *channel, std::string message, int i);//
+		void 	ModeI(User *user, Channel *channel, int i);//
+		void 	ModeO(User *user, Channel *channel, std::string message, int i);//
+		void 	ModeT(User *user, Channel *channel, int i);//
 		void 	ModeL(User *user, Channel *channel, std::string message, int i);
 
 
