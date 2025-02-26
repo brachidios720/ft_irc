@@ -4,7 +4,7 @@
 #include "Channel.hpp"
 #include "User.hpp"
 
-static bool Stop = 0;
+static bool Stop = false;
 
 struct s_socket
 {
@@ -16,6 +16,14 @@ class Server
 {
 	public :
 		Server(std::string const &port, std::string const &password);
+		//Server function 
+		
+
+		bool	isValidPort(const std::string& portStr);
+		void	run();
+		void	serverLoop();
+		
+		//End of Server function
 		~Server();
 		
 	private :
@@ -26,7 +34,7 @@ class Server
 		s_socket SServer;
 
 		std::vector<pollfd> * poll_fds;
-		int numConnection;
+		int numConnection = 0;
 
 		std::map<int, User*> UserTab;
 		std::map<std::string, Channel*> ChannelTab;
@@ -38,7 +46,7 @@ class Server
 		bool	Server_loop();
 
 		void	CommandCAP(User *user);
-		int	CommandPASS(User *user, std::string pass);
+		int		CommandPASS(User *user, std::string pass);
 		void	CommandNICK(User *user, std::string message);
 		void	CommandJOIN(User *user, std::string message);
 		void 	CommandJOIN2(User *user, std::string nameChannel, std::string mdp);
