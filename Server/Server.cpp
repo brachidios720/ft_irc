@@ -6,7 +6,7 @@
 /*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/02/26 23:26:33 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/03/04 21:01:36 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ Server::Server(){
 
 
 Server::Server(std::string const &port, std::string const &password)
-	:_password(password) 
+	:_password(password) , numConnection(0)
 {
 	if (isValidPort(port))
 	{
@@ -123,14 +123,14 @@ void Server::serverLoop()
                 perror("accept");
                 continue;
             }
-std::cout << "DEBUG: New client connected: fd " << client_fd << std::endl;
-    std::cout << "DEBUG: poll_fds size before push: " << poll_fds->size() << std::endl;
+			std::cout << "DEBUG: New client connected: fd " << client_fd << std::endl;
+			std::cout << "DEBUG: poll_fds size before push: " << poll_fds->size() << std::endl;
             std::cout << "New client connected: fd " << client_fd << std::endl;
             pollfd client_poll = { client_fd, POLLIN, 0 };
             client_poll.fd = client_fd;
             client_poll.events = POLLIN;
             poll_fds->push_back(client_poll);
-std::cout << "DEBUG: poll_fds size after push: " << poll_fds->size() << std::endl;
+			std::cout << "DEBUG: poll_fds size after push: " << poll_fds->size() << std::endl;
 			//UserTab[client_poll.fd] = test;
 			UserTab[client_poll.fd] = new User(client_poll.fd);// Maybe better
             numConnection++;
@@ -160,10 +160,9 @@ std::cout << "DEBUG: poll_fds size after push: " << poll_fds->size() << std::end
 
 Server::~Server()
 {
-	for (auto &pfd : *poll_fds) {
-        close(pfd.fd);
-    }
-	for (auto it = UserTab.begin(); it != UserTab.end(); ++it)
+	for (std::vector<pollfd>::iterator it = poll_fds->begin(); it != poll_fds->end(); ++it)
+		close(it->fd);
+	for (std::map<int, User*>::iterator it = UserTab.begin(); it != UserTab.end(); ++it)
 		delete it->second;
 	UserTab.clear();
     delete poll_fds;

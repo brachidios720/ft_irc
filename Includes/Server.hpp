@@ -5,6 +5,7 @@
 #include "User.hpp"
 
 static bool Stop = false;
+#define nullptr 0
 
 struct s_socket
 {
@@ -34,7 +35,7 @@ class Server
 		s_socket SServer;
 
 		std::vector<pollfd> * poll_fds;
-		int numConnection = 0;
+		int numConnection;
 
 		std::map<int, User*> UserTab;
 		std::map<std::string, Channel*> ChannelTab;

@@ -7,7 +7,9 @@ FLAGS = -g -Wall -Wextra -Werror -std=c++98
 INCLUDES = -I ./Includes/
 
 PARSING_SOURCES = ./Parsing/
-SERVER_SOURCES = ./Server/
+SERVER_SOURCES = ./Server/Server.cpp \
+				 ./Server/User.cpp \
+				 .Server/main.cpp
 COMMANDES_SOURCES = ./Commandes/
 
 
@@ -36,8 +38,7 @@ ${COMMANDES_OBJ_PATH}:
 	mkdir -p ${COMMANDES_OBJ_PATH}
 
 ${NAME} : ${PARSING_OBJS} ${SERVER_OBJS} ${COMMANDES_OBJS}
-	${CC} ${FLAGS} ${PARSING_OBJS} ${SERVER_OBJS} ${COMMANDES_OBJS} \
-	-o $@ ${MLX_FLAG} ${LIBFT_FLAG}
+	${CC} ${FLAGS} ${PARSING_OBJS} ${SERVER_OBJS} ${COMMANDES_OBJS}	-o $@
 
 ${PARSING_OBJ_PATH}%.o : ./Parsing/%.cpp
 	${CC} ${FLAGS} ${INCLUDES} -c $< -o $@
