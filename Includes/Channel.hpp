@@ -19,6 +19,8 @@ class Channel
 		bool getMode(char mode);
 		std::string getPassword(void);
 		bool isEmpty();
+		std::string	getTopic();
+		void	setTopic(std::string topic);
 		int isOp(std::string nickname);
 		void changeOp(std::string nickname, int op);
 		void SetUserLimit(int limit);
@@ -26,9 +28,16 @@ class Channel
 		bool isPlace();
 		void addUserInvite(User *user);
 		bool IsInvite(User *user);
+		std::vector<std::string> getUserNicknames();
+		void setInviteOnly(bool status);//
+		bool	isInviteOnly();//
+		bool	isTopicRestricted();//
+		void	setTopicRestricted(bool status);//
+		int		getUserLimite();
 	private :
 		std::string _password;
 		const std::string _name;
+		std::string _topic;
 		std::map<User*, int> UserBook;
 		std::vector<User*> UserInvite;
 		int _userLimit;
@@ -36,4 +45,5 @@ class Channel
 		bool _modeT;
 		bool _modeL;
 		bool _modeI;
+		bool _topicRestricted;//
 };
