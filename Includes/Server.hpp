@@ -4,7 +4,8 @@
 #include "Channel.hpp"
 #include "User.hpp"
 
-static bool Stop = 0;
+static bool Stop = false;
+#define nullptr 0
 
 struct s_socket
 {
@@ -16,6 +17,14 @@ class Server
 {
 	public :
 		Server(std::string const &port, std::string const &password);
+		//Server function 
+		
+
+		bool	isValidPort(const std::string& portStr);
+		void	run();
+		void	serverLoop();
+		
+		//End of Server function
 		~Server();
 		
 	private :
