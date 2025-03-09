@@ -64,9 +64,8 @@ void    Server::CommandJOIN(User *user, std::string message){
         std::string err = "ERROR : you are not invite to join this channel\r\n";
         send(user->getSocket(), err.c_str(), err.length(), 0);
     }
+    std::string mdp = exctracteMdp(message);
     if(!channel->getPassword().empty()){
-        std::string mdp = exctracteMdp(message);
-
         if(mdp.empty() || channel->getPassword() != mdp){
             std::string mpdError = "ERROR :invalid password\r\n";
             send(user->getSocket(), mpdError.c_str(), mpdError.length(), 0);
@@ -389,7 +388,7 @@ void    Server::CommandINVITE(User *user, std::string message){
         }
         if(channel->getUserLimite() != -1 && channel->getNbUser() == channel->getUserLimite()){
             std::string err = ": you can't invite this user because the userlimite has been reached\r\n";
-            send(user->getSocket, err.c_str(), err.length(), 0);
+            send(user->getSocket(), err.c_str(), err.length(), 0);
             return;
         }
         if(channel->IsHere(user)){
@@ -521,7 +520,7 @@ void 	Server::ModeK(User *user, Channel *channel, std::string message, int i){
         }
         channel->SetPassword(message);
         std::string rep = ": password set\r\n";
-        send(user->getSocket(), rep.c_str(), rep.lenght(), 0);
+        send(user->getSocket(), rep.c_str(), rep.length(), 0);
     }
     else{
         channel->SetPassword("");
@@ -532,44 +531,44 @@ void 	Server::ModeK(User *user, Channel *channel, std::string message, int i){
 
 void 	Server::ModeI(User *user, Channel *channel, int i){
     if(i == 1){
-        channel->setInviteOnly(true)
+        channel->setInviteOnly(true);
         std::string mess = "invite only mode activate\r\n";
         send(user->getSocket(), mess.c_str(), mess.length(), 0);
     }
     else{
         channel->setInviteOnly(false);
         std::string mess = "invite only mode desacative\r\n";
-        send(user->getSocket(), mess.c_str(), mess.lenght(), 0);
+        send(user->getSocket(), mess.c_str(), mess.length(), 0);
     }
 }
 
 void 	Server::ModeO(User *user, Channel *channel, std::string message, int i){
     std::stringstream ss(message);
-    std::string mode, channelPrint, mode, targetUser;
+    std::string modes, channelPrint, mode, targetUser;
     
-    ss << mode << channelPrint << mode << targetUser;
+    ss << modes << channelPrint << mode << targetUser;
 
     if(channelPrint.empty() || !mode.empty() || !targetUser.empty()){
         std::string err = "ERROR: part of the message is incomplet\r\n";
         send(user->getSocket(), err.c_str(), err.length(), 0);
         return;
     }
-    if(!channel.FindChannel(channelPrint)){
+    if(!FindChannel(channelPrint)){
         std::string err = "ERROR: no such channel\r\n";
-        send(user->getSocket(), err.c_str(), err.lenght(), 0);
+        send(user->getSocket(), err.c_str(), err.length(), 0);
         return;
     }
-    if(!channel->isOp(user)){
+    if(!channel->isOp(user->getNickname())){
         std::string err = "ERROR: you are not operator\r\n";
         send(user->getSocket(), err.c_str(), err.length(), 0);
         return;
     }
-    user *target = channel->getName(targetUser);
-    if(!channel->getName(targetUser)){
-        std::string err = "ERROR: this user in already not in this channel\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
+    // user *target = channel->getStringUser(targetUser);
+    // if(!channel->IsHere(target)){
+    //     std::string err = "ERROR: this user in already not in this channel\r\n";
+    //     send(user->getSocket(), err.c_str(), err.length(), 0);
+    //     return;
+    // }
     if(i == 1){
         if(channel->isOp(targetUser)){
             std::string err = "ERROR: this target user is already operator\r\n";
@@ -595,7 +594,7 @@ void 	Server::ModeO(User *user, Channel *channel, std::string message, int i){
 
 void 	Server::ModeT(User *user, Channel *channel, int i){
 
-    if(!channel->isOp(user->getGetNick)){
+    if(!channel->isOp(user->getNickname())){
         std::string err = "ERROR: you are not an operator in this channel\r\n";
         send(user->getSocket(), err.c_str(), err.length(), 0);
         return;
@@ -613,7 +612,7 @@ void 	Server::ModeT(User *user, Channel *channel, int i){
     else{
         if(!channel->isTopicRestricted()){
             std::string err = "ERROR: the channel is already not topic restricted\r\n";
-            send(user->getSochet(), err.c_str(), err.length(), 0);
+            send(user->getSocket(), err.c_str(), err.length(), 0);
             return;
         }
         std::string mess = ": the Topic is now unrestricted\r\n";
@@ -624,7 +623,7 @@ void 	Server::ModeT(User *user, Channel *channel, int i){
 
 void 	Server::ModeL(User *user, Channel *channel, std::string message, int i){
 
-    if(!channel->isOp(user)){
+    if(!channel->isOp(user->getNickname())){
         std::string err = "ERROR: you are not a channel operator\r\n";
         send(user->getSocket(), err.c_str(), err.length(), 0);
         return;
@@ -639,7 +638,7 @@ void 	Server::ModeL(User *user, Channel *channel, std::string message, int i){
             send(user->getSocket(), err.c_str(), err.length(), 0);
             return;
         }
-        std::string mess = "the actualy number limite is now " + limte + "\r\n";
+        std::string mess = "the actualy number limite is now " + std::to_string(limit) + " \r\n";
         channel->SetUserLimit(limit);
         channel->SendMsg(user, mess);
     }

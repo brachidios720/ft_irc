@@ -5,7 +5,6 @@
 #include "User.hpp"
 
 static bool Stop = false;
-#define nullptr 0
 
 struct s_socket
 {
