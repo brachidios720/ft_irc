@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
+/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/03/04 21:01:36 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/03/09 15:48:39 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../Includes/Server.hpp"
+#include "../Includes/Channel.hpp"
+#include "../Includes/User.hpp"
 #include <cstdlib>
 #include <iostream>
 
@@ -150,10 +152,47 @@ void Server::serverLoop()
                 }
                 buffer[bytes] = '\0';
                 std::cout << "Received from client fd " << poll_fds->at(i).fd << ": " << buffer << std::endl;
+                User *callingUser = UserTab[poll_fds->at(i).fd];
+                parseCommand(buffer, callingUser);
+                
                 //write(poll_fds->at(i).fd, RESPONSE TO USER, RESPONSE SIZE); RESPONSE BACK TO USER IF NEEDED
             }
         }
     }
+}
+
+
+void Server::parseCommand(const std::string command, User *user)
+{
+    std::string commandName;
+    std::string message;
+    std::stringstream ss(command);
+    ss >> commandName;
+    std::getline(ss, message);
+    if (commandName == "CAP")
+        CommandCAP(user);
+    else if (commandName == "PASS")
+        CommandPASS(user, message);
+    else if (commandName == "NICK")
+        CommandNICK(user, message);
+    else if (commandName == "JOIN")
+        CommandJOIN(user, message);
+    else if (commandName == "USER")
+        CommandUSER(user, message);
+    else if (commandName == "NAMES")
+        CommandNAMES(user, ChannelTab[message]);
+    else if (commandName == "PRIVMSG")
+        CommandPRIVMSG(user, message);
+    else if (commandName == "PART")
+        CommandPART(user, message);
+    else if (commandName == "MODE")
+        CommandMODE(user, message);
+    else
+    {
+        std::string err = "ERROR: Command not found\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+    }
+    
 }
 
 

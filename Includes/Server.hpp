@@ -80,4 +80,6 @@ class Server
 		void	SendMessage(User *user, Channel *channel, std::string mes);
 		Channel	*FindChannel(std::string search);
 		static void	handle_signal(int signal);
+
+		void	parseCommand(const std::string command, User *user);
 };
