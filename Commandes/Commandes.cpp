@@ -1,4 +1,67 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Commandes.cpp                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
+/*   Updated: 2025/03/12 18:06:44 by hehuang          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../Includes/Server.hpp"
+#include <string>
+
+/*
+void	Server::CommandCAP(User *user)
+{
+(void) user;
+		std::cout << "CAP received" << std::endl;
+};
+
+
+int	Server::CommandPASS(User *user, std::string &message){
+(void) user;
+std::cout << "NICK received | message : " << message << std::endl;
+
+	return 0;};
+
+void	Server::CommandNICK(User *user, std::string &message)
+{
+	(void) user;
+		std::cout << "NICK received | message : " << message << std::endl;
+};
+void	Server::CommandJOIN(User *user, std::string &message)
+{
+(void) user;
+		std::cout << "JOIN received | message : " << message << std::endl;
+};
+void	Server::CommandUSER(User *user, std::string &message)
+{
+(void) user;
+		std::cout << "USER received | message : " << message << std::endl;
+};
+void	Server::CommandNAMES(User *user, std::string &str)
+{
+(void) user;
+		std::cout << "NAMES received | message : " << str << std::endl;
+};
+void	Server::CommandPRIVMSG(User *user, std::string &message)
+{
+(void) user;
+		std::cout << "PRIVMSG received | message : " << message << std::endl;
+};
+void	Server::CommandPART(User *user, std::string &message)
+{
+(void) user;
+		std::cout << "PART received | message : " << message << std::endl;
+};
+void	Server::CommandMODE(User *user, std::string &message)
+{
+(void) user;
+		std::cout << "MODE received | message : " << message << std::endl;
+};*/
 
 
 void    Server::CommandPING(User *user, std::string message){
@@ -272,7 +335,7 @@ void    Server::CommandPART(User *user, std::string message){
     std::string rep = ": " + user->getNickname() + " PART " + channelName + "\r\n";
     send(user->getSocket(), rep.c_str(), rep.length(), 0);
 }
-
+/*
 void    Server::CommandMODE(User *user, std::string message){
     std::stringstream ss(message);
     std::string target, mode;
@@ -313,7 +376,7 @@ void    Server::CommandMODE(User *user, std::string message){
             ModeO(user, nullptr, "", (mode == "+o" ? 1 : 0));
     }
 }
-
+*/
 void    Server::CommandTOPIC(User *user, std::string message){
         std::stringstream ss(message);
         std::string channelname , newtopic;
@@ -651,4 +714,4 @@ void 	Server::ModeL(User *user, Channel *channel, std::string message, int i){
         std::string mess = "there is no actualy userLimite\r\n";
         channel->SetUserLimit(-1);
         channel->SendMsg(user, mess);
-}
+}*/

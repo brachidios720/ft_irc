@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/03/09 15:48:39 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/03/12 18:04:59 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include "../Includes/User.hpp"
 #include <cstdlib>
 #include <iostream>
+#include <string>
 
 #define MAX_PORT 65535 
 
@@ -151,7 +152,7 @@ void Server::serverLoop()
                     continue;
                 }
                 buffer[bytes] = '\0';
-                std::cout << "Received from client fd " << poll_fds->at(i).fd << ": " << buffer << std::endl;
+                std::cout << "Received from client fd " << poll_fds->at(i).fd << ": " << buffer;
                 User *callingUser = UserTab[poll_fds->at(i).fd];
                 parseCommand(buffer, callingUser);
                 
@@ -180,7 +181,7 @@ void Server::parseCommand(const std::string command, User *user)
     else if (commandName == "USER")
         CommandUSER(user, message);
     else if (commandName == "NAMES")
-        CommandNAMES(user, ChannelTab[message]);
+        CommandNAMES(user, message);
     else if (commandName == "PRIVMSG")
         CommandPRIVMSG(user, message);
     else if (commandName == "PART")
@@ -196,6 +197,18 @@ void Server::parseCommand(const std::string command, User *user)
 }
 
 
+Channel *Server::FindChannel(std::string search)
+{
+	std::map<std::string, Channel *>::iterator it;
+	for (it = ChannelTab.begin(); it != ChannelTab.end(); ++it)
+	{
+		std::string name = it->first;
+		Channel *channel = it->second;
+		if (search == name)
+			return channel;
+	}
+	return NULL;
+}
 
 Server::~Server()
 {

@@ -6,7 +6,7 @@
 /*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 23:19:29 by hehuang           #+#    #+#             */
-/*   Updated: 2025/02/26 23:07:54 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/03/09 19:15:30 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,10 @@ User::User(int socket): _socket(socket)
     this->_nickname = "";
     this->_hostname = "";
     this->_getNick = false;
+}
+
+bool User::operator==(const User &other) const {
+	return (this->_username == other._username && this->_nickname == other._nickname && this->_hostname == other._hostname);
 }
 
 //GETTER
