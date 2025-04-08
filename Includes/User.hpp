@@ -6,6 +6,7 @@ class User
 	public :
 		User(int socket);
 		~User();
+		bool operator==(const User &other) const;
 		std::string getUsername(void);
 		std::string getNickname(void);
 		std::string getChannel(void);

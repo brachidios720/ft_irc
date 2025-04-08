@@ -3,8 +3,8 @@
 bool    Server::isNickAvailable(const std::string& nickname){
         return(NicknameMap.find(nickname) == NicknameMap.end());
 }
-
-std::string     Server::exctracteChannelName(const std::string &message){
+/*
+std::string     Server::extractChannelName(const std::string &message){
         std::stringstream ss(message);
         std::string command, channelName;
 
@@ -12,9 +12,9 @@ std::string     Server::exctracteChannelName(const std::string &message){
         ss >> channelName;
 
         return channelName;
-}
+}*/
 
-std::string     Server::exctracteMdp(const std::string &message){
+std::string     Server::extractMdp(const std::string &message){
         std::stringstream ss(message);
         std::string command, channelName, mdp;
 
