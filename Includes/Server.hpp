@@ -4,6 +4,8 @@
 #include "Channel.hpp"
 #include "User.hpp"
 
+#define nullptr NULL
+
 static bool Stop = false;
 
 struct s_socket

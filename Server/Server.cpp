@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/03/09 15:48:39 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/08 15:32:06 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -205,4 +205,14 @@ Server::~Server()
 		delete it->second;
 	UserTab.clear();
     delete poll_fds;
+}
+
+Channel	*Server::FindChannel(std::string search)
+{
+    for (std::map<std::string, Channel *>::iterator it = ChannelTab.begin(); it != ChannelTab.end(); ++it)
+    {
+        if (it->first == search)
+            return it->second;
+    }
+    return nullptr;
 }

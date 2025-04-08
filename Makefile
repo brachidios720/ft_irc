@@ -8,7 +8,9 @@ INCLUDES = -I ./Includes/
 
 SERVER_SOURCES = ./Server/Server.cpp \
 				 ./Server/User.cpp \
-				 .Server/main.cpp
+				 ./Server/main.cpp \
+				 ./Server/Channel.cpp \
+
 COMMANDES_SOURCES = ./Commandes/Commandes.cpp \
 					./Commandes/CommandesUtils.cpp \
 

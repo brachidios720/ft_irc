@@ -638,7 +638,9 @@ void 	Server::ModeL(User *user, Channel *channel, std::string message, int i){
             send(user->getSocket(), err.c_str(), err.length(), 0);
             return;
         }
-        std::string mess = "the actualy number limite is now " + std::to_string(limit) + " \r\n";
+        std::stringstream ss;
+        ss << "the actualy number limite is now " << limit << "\r\n";
+        std::string mess = ss.str();
         channel->SetUserLimit(limit);
         channel->SendMsg(user, mess);
     }
