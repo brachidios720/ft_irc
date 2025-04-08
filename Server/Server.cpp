@@ -6,7 +6,7 @@
 /*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/03/12 18:04:59 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/07 19:08:26 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,7 +152,8 @@ void Server::serverLoop()
                     continue;
                 }
                 buffer[bytes] = '\0';
-                std::cout << "Received from client fd " << poll_fds->at(i).fd << ": " << buffer;
+
+                std::cout << "Received from client fd " << poll_fds->at(i).fd << ": |" << buffer << "|\r\n" << std::endl;
                 User *callingUser = UserTab[poll_fds->at(i).fd];
                 parseCommand(buffer, callingUser);
                 
@@ -162,6 +163,23 @@ void Server::serverLoop()
     }
 }
 
+std::vector<std::string> splitByCRLF(const std::string& input) {
+    std::vector<std::string> lines;
+    size_t start = 0;
+    size_t end;
+
+    while ((end = input.find("\r\n", start)) != std::string::npos) {
+        lines.push_back(input.substr(start, end - start));
+        start = end + 2; // skip over the "\r\n"
+    }
+
+    // In case the last line doesn't end in \r\n
+    if (start < input.length()) {
+        lines.push_back(input.substr(start));
+    }
+
+    return lines;
+}
 
 void Server::parseCommand(const std::string command, User *user)
 {

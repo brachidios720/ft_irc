@@ -6,7 +6,7 @@
 /*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 18:33:49 by hehuang           #+#    #+#             */
-/*   Updated: 2025/03/12 18:00:01 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/07 16:16:41 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-Channel::Channel(std::string name){};
+Channel::Channel(std::string name): _name(name){};
 Channel::~Channel(){};
 std::string	Channel::getName(){return this->_name;}
 void		Channel::AddUser(User *user, std::string mdp, int super){};

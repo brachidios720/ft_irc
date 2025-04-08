@@ -75,8 +75,8 @@ class Server
 
 //		COMMAND UTILS
 		bool	isNickAvailable(const std::string& nickname);
-		std::string	exctracteChannelName(const std::string &message);
-		std::string exctracteMdp(const std::string &message);
+		std::string	extractChannelName(const std::string &message);
+		std::string extractMdp(const std::string &message);
 		
 		void	timeOut(User *user);
 //		void	SendMessage(User *user, Channel *channel, std::string mes);

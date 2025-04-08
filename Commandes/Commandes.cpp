@@ -6,7 +6,7 @@
 /*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/03/12 18:06:44 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/07 18:35:37 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,70 +19,76 @@ void	Server::CommandCAP(User *user)
 (void) user;
 		std::cout << "CAP received" << std::endl;
 };
-
-
+*/
+/*
 int	Server::CommandPASS(User *user, std::string &message){
 (void) user;
 std::cout << "NICK received | message : " << message << std::endl;
 
 	return 0;};
-
+*//*
 void	Server::CommandNICK(User *user, std::string &message)
 {
 	(void) user;
 		std::cout << "NICK received | message : " << message << std::endl;
-};
+};*/
 void	Server::CommandJOIN(User *user, std::string &message)
 {
-(void) user;
-		std::cout << "JOIN received | message : " << message << std::endl;
+	(void) user;
+	std::string msg = "RECEIVED "+ message + "\r\n";
+    send(user->getSocket(), msg.c_str(), msg.length(), 0);
 };
+/*
 void	Server::CommandUSER(User *user, std::string &message)
 {
 (void) user;
 		std::cout << "USER received | message : " << message << std::endl;
-};
+};*/
 void	Server::CommandNAMES(User *user, std::string &str)
 {
-(void) user;
-		std::cout << "NAMES received | message : " << str << std::endl;
+	(void) user;
+	std::string msg = "RECEIVED "+ str + "\r\n";
+    send(user->getSocket(), msg.c_str(), msg.length(), 0);
 };
 void	Server::CommandPRIVMSG(User *user, std::string &message)
 {
 (void) user;
-		std::cout << "PRIVMSG received | message : " << message << std::endl;
+	std::string msg = "RECEIVED "+ message + "\r\n";
+    send(user->getSocket(), msg.c_str(), msg.length(), 0);
 };
 void	Server::CommandPART(User *user, std::string &message)
 {
 (void) user;
-		std::cout << "PART received | message : " << message << std::endl;
+	std::string msg = "RECEIVED "+ message + "\r\n";
+    send(user->getSocket(), msg.c_str(), msg.length(), 0);
 };
 void	Server::CommandMODE(User *user, std::string &message)
 {
 (void) user;
-		std::cout << "MODE received | message : " << message << std::endl;
-};*/
+	std::string msg = "RECEIVED "+ message + "\r\n";
+    send(user->getSocket(), msg.c_str(), msg.length(), 0);
+};
 
 
-void    Server::CommandPING(User *user, std::string message){
+void    Server::CommandPING(User *user, std::string &message){
     std::string server = message.substr(5);
     std::string pong = "PONG" + server + "\r\n";
     send(user->getSocket(), pong.c_str(), pong.length(), 0);
 }
 
+void    Server::CommandNICK(User *user, std::string &message){
 
-void    Server::CommandNICK(User *user, std::string message){
-
-    std::string nickname = message.substr(5);
+    std::string nickname = message.substr(1);
 
     if(nickname.empty()){
         std::string errorMessage = "ERROR :Nickname cannot be empty\r\n";
+		std::cout << "username = " << nickname << std::endl;
         send(user->getSocket(), errorMessage.c_str(), errorMessage.length(), 0);
         return;
     }
 
     if(nickname.length() > 9 || nickname.length() < 3 || !isalpha(nickname[0])){
-        std::string errorFormat = "ERROR :Nickname have norme error\r\n";
+        std::string errorFormat = "ERROR :Nickname have norme error(start with letter and size between 3 and 9)\r\n";
         send(user->getSocket(), errorFormat.c_str(), errorFormat.length(), 0);
         return;
     }
@@ -92,15 +98,22 @@ void    Server::CommandNICK(User *user, std::string message){
         send(user->getSocket(), errorDouble.c_str(), errorDouble.length(), 0);
         return;
     }
+
+	std::string oldNick = user->getNickname();
+    if (!oldNick.empty() && oldNick == user->getNickname()) {
+        this->NicknameMap.erase(oldNick);
+    }
     
+	this->NicknameMap[nickname] = user;
     user->setNickname(nickname);
-    std::string sucess = "NICK :" + nickname + "\r\n";
+    std::string sucess = "NICK : " + nickname + "\r\n";
     send(user->getSocket(), sucess.c_str(), sucess.length(), 0);
 }
 
-void    Server::CommandJOIN(User *user, std::string message){
+/*
+void    Server::CommandJOIN(User *user, std::string &message){
 
-    std::string canal = exctracteChannelName(message);
+    std::string canal = message.substr(1);
 
     if(canal[0] != '#' || canal[0] != '&'){
         std::string normErr = "ERROR :Chanel name norme error\r\n";
@@ -127,7 +140,7 @@ void    Server::CommandJOIN(User *user, std::string message){
         std::string err = "ERROR : you are not invite to join this channel\r\n";
         send(user->getSocket(), err.c_str(), err.length(), 0);
     }
-    std::string mdp = exctracteMdp(message);
+    std::string mdp = extractMdp(message);
     if(!channel->getPassword().empty()){
         if(mdp.empty() || channel->getPassword() != mdp){
             std::string mpdError = "ERROR :invalid password\r\n";
@@ -140,60 +153,68 @@ void    Server::CommandJOIN(User *user, std::string message){
 
     std::string valid = user->getNickname() + " JOIN " + canal + "\r\n";
     send(user->getSocket(), valid.c_str(), valid.length(), 0); 
-}
+}*/
 
-void    Server::CommandUSER(User *user, std::string message){
+void    Server::CommandUSER(User *user, std::string &message){
 
         if(!user->getUsername().empty()){
-            std::string errorRegis = "ERROR : You cannot reregister\r\n";
-            send(user->getSocket(), errorRegis.c_str(), errorRegis.empty(), 0);
+            std::string errorRegis = "ERROR : You cannot registerter\r\n";
+            send(user->getSocket(), errorRegis.c_str(), errorRegis.length(), 0);
             return;
         }
 
         std::stringstream ss(message);
-        std::string command, username, hostname, servername, realname;
+        std::string username, hostname, servername, realname;
 
-        ss >> command;
         ss >> username >> hostname >> servername >> realname;
 
         if(username.empty() || hostname.empty() || realname.empty() || servername.empty()){
-            std::string emptyEr = "ERROR : to few information\r\n";
+            std::string emptyEr = "ERROR : too few information (username | hostname | servername | realname)\r\n";
             send(user->getSocket(), emptyEr.c_str(), emptyEr.length(), 0);  
             return;
         }
 
-        user->setUsername(hostname);
+        user->setHostname(hostname);
         user->setUsername(username);
 
-        std::string reponse = "Welcome to IRC " + user->getNickname() + username + "\r\n";
+        std::string reponse = "Welcome to IRC " + user->getNickname() + " " + username + "\r\n";
         send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
 }
 
-int    Server::CommandPASS(User *user, std::string pass){
-        
-        if(!user->getUsername().empty()){
-            std::string errorRegis = "ERROR : You cannot reregister\r\n";
-            send(user->getSocket(), errorRegis.c_str(), errorRegis.empty(), 0);
-            return 0;
-        }
-        if(pass.empty()){   
-            std::string errorPass = "ERROR : pass is empty\r\n";
-            send(user->getSocket(), errorPass.c_str(), errorPass.length(), 0);
-            return 0;
-        }
-        if(pass != _password){
-            std::string badPass = "ERROR : bad password\r\n";
-            send(user->getSocket(), badPass.c_str(), badPass.length(), 0);
-            return 0;
-        }
+int    Server::CommandPASS(User *user, std::string &message){
+    
 
-        user->setIsRegister(true);
-        return(1);
+	std::string pass = message.substr(1);
+    if(!user->getUsername().empty()){
+        std::string errorRegis = "ERROR : You're already on our server\r\n";
+        send(user->getSocket(), errorRegis.c_str(), errorRegis.length(), 0);
+        return 1;
+    }
+	std::cout << "in pass user empty" << std::endl;
+	std::cout << message << std::endl;
+    if(pass.empty()){   
+        std::string errorPass = "ERROR : pass is empty\r\n";
+        send(user->getSocket(), errorPass.c_str(), errorPass.length(), 0);
+        return 1;
+    }
+	std::cout << "pass empty" << std::endl;
+    if(pass != this->_password){
+        std::string badPass = "ERROR : bad password\r\n";
+        send(user->getSocket(), badPass.c_str(), badPass.length(), 0);
+        return 1;
+    }
+
+    user->setIsRegister(true);
+	send(user->getSocket(), "OK\r\n", 4, 0);	
+    return(0);
 }
 
 void    Server::CommandCAP(User *user){
+	
+	std::string reponse = ":server CAP * LS\r\n";
+    send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
 
-    std::string command = user->getbuffCommand();
+    /*std::string command = user->getbuffCommand();
     
     std::stringstream ss(command);
     std::string subcommand, params;
@@ -230,9 +251,9 @@ void    Server::CommandCAP(User *user){
     else{
         std::string reponse = "command not found\r\n";
         send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
-    }
+    }*/
 }
-
+/*
 void    Server::CommandNAMES(User *user, Channel *channel){
     
     if(!channel){
@@ -253,7 +274,7 @@ void    Server::CommandNAMES(User *user, Channel *channel){
     std::string listefinish = channel->getName() + "end of the liste\r\n";
     send(user->getSocket(), listefinish.c_str(), listefinish.length(), 0);
 }
-
+*//*
 void    Server::CommandPRIVMSG(User *user, std::string message){
 
     std::stringstream ss(message);
@@ -302,7 +323,7 @@ void    Server::CommandPRIVMSG(User *user, std::string message){
     }
 
 }
-
+*//*
 void    Server::CommandPART(User *user, std::string message){
 
     std::stringstream ss(message);
@@ -335,7 +356,7 @@ void    Server::CommandPART(User *user, std::string message){
     std::string rep = ": " + user->getNickname() + " PART " + channelName + "\r\n";
     send(user->getSocket(), rep.c_str(), rep.length(), 0);
 }
-/*
+*//*
 void    Server::CommandMODE(User *user, std::string message){
     std::stringstream ss(message);
     std::string target, mode;
@@ -376,7 +397,7 @@ void    Server::CommandMODE(User *user, std::string message){
             ModeO(user, nullptr, "", (mode == "+o" ? 1 : 0));
     }
 }
-*/
+*//*
 void    Server::CommandTOPIC(User *user, std::string message){
         std::stringstream ss(message);
         std::string channelname , newtopic;
@@ -426,7 +447,7 @@ void    Server::CommandTOPIC(User *user, std::string message){
             }
         }
 }
-
+*//*
 void    Server::CommandINVITE(User *user, std::string message){
 
         std::stringstream ss(message);
@@ -485,7 +506,7 @@ void    Server::CommandINVITE(User *user, std::string message){
         std::string repp = ": " + nickname + " has been received the invitation to the channel : " + channelname + "\r\n"; 
         send(user->getSocket(), repp.c_str(), repp.length(), 0);
 }
-
+*//*
 void    Server::CommandKICK(User *user, std::string message){
     std::stringstream ss(message);
     std::string channelname, nickname;
@@ -544,7 +565,7 @@ void    Server::CommandKICK(User *user, std::string message){
     channel->SendMsg(user, rep);
     send(targetUser->getSocket(), rep.c_str(), rep.length(), 0);
 }
-
+*/
 // void    Server::CommandQUIT(User *user, std::string message){
 
 //     std::stringstream ss(message);
@@ -573,7 +594,7 @@ void    Server::CommandKICK(User *user, std::string message){
 
 // }
 
-
+/*
 void 	Server::ModeK(User *user, Channel *channel, std::string message, int i){
     if(i == 1){
         if(message.empty()){
@@ -591,7 +612,7 @@ void 	Server::ModeK(User *user, Channel *channel, std::string message, int i){
         send(user->getSocket(), rep.c_str(), rep.length(), 0);
     }
 }
-
+*//*
 void 	Server::ModeI(User *user, Channel *channel, int i){
     if(i == 1){
         channel->setInviteOnly(true);
@@ -604,7 +625,7 @@ void 	Server::ModeI(User *user, Channel *channel, int i){
         send(user->getSocket(), mess.c_str(), mess.length(), 0);
     }
 }
-
+*//*
 void 	Server::ModeO(User *user, Channel *channel, std::string message, int i){
     std::stringstream ss(message);
     std::string modes, channelPrint, mode, targetUser;
@@ -653,8 +674,8 @@ void 	Server::ModeO(User *user, Channel *channel, std::string message, int i){
         channel->SendMsg(user, mess);
     }
 }
-
-
+*/
+/*
 void 	Server::ModeT(User *user, Channel *channel, int i){
 
     if(!channel->isOp(user->getNickname())){
@@ -683,7 +704,7 @@ void 	Server::ModeT(User *user, Channel *channel, int i){
         channel->SendMsg(user, mess);
     }
 }
-
+*//*
 void 	Server::ModeL(User *user, Channel *channel, std::string message, int i){
 
     if(!channel->isOp(user->getNickname())){

@@ -128,6 +128,11 @@ void	User::setIp(std::string ip)
 	this->_ip = ip;
 }
 
+void	User::setIsRegister(bool registered)
+{
+	this->_isregistered = registered;
+}
+
 //AUTRES
 
 void	User::joinbuffCommand(std::string command)
