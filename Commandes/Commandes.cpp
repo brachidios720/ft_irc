@@ -6,7 +6,7 @@
 /*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/07 18:35:37 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/08 19:06:18 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,9 +70,10 @@ void	Server::CommandMODE(User *user, std::string &message)
 };
 
 
-void    Server::CommandPING(User *user, std::string &message){
+void    Server::CommandPING(User *user, std::string &message)
+{
     std::string server = message.substr(5);
-    std::string pong = "PONG" + server + "\r\n";
+    std::string pong = ":PONG " + message + "\r\n";
     send(user->getSocket(), pong.c_str(), pong.length(), 0);
 }
 
@@ -81,6 +82,7 @@ void    Server::CommandNICK(User *user, std::string &message){
     std::string nickname = message.substr(1);
 
     if(nickname.empty()){
+		std::cout << "empty nick" << std::endl;
         std::string errorMessage = "ERROR :Nickname cannot be empty\r\n";
 		std::cout << "username = " << nickname << std::endl;
         send(user->getSocket(), errorMessage.c_str(), errorMessage.length(), 0);
@@ -99,14 +101,21 @@ void    Server::CommandNICK(User *user, std::string &message){
         return;
     }
 
+	if (!user->getIsRegisted())
+	{
+		std::string sucess = this->_name + " 001 " + nickname + " :Welcome to the IRC server, " + nickname + "!\r\n";
+		send(user->getSocket(), sucess.c_str(), sucess.length(), 0);
+		return (user->setIsRegister(true));
+	}
+
 	std::string oldNick = user->getNickname();
     if (!oldNick.empty() && oldNick == user->getNickname()) {
-        this->NicknameMap.erase(oldNick);
+        this->nicknameMap.erase(oldNick);
     }
     
-	this->NicknameMap[nickname] = user;
+	this->nicknameMap[nickname] = user;
     user->setNickname(nickname);
-    std::string sucess = "NICK : " + nickname + "\r\n";
+    std::string sucess = ":" + oldNick + " NICK :" + nickname + "\r\n";
     send(user->getSocket(), sucess.c_str(), sucess.length(), 0);
 }
 
@@ -176,6 +185,7 @@ void    Server::CommandUSER(User *user, std::string &message){
 
         user->setHostname(hostname);
         user->setUsername(username);
+		user->setRealName(realname);
 
         std::string reponse = "Welcome to IRC " + user->getNickname() + " " + username + "\r\n";
         send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
@@ -190,14 +200,12 @@ int    Server::CommandPASS(User *user, std::string &message){
         send(user->getSocket(), errorRegis.c_str(), errorRegis.length(), 0);
         return 1;
     }
-	std::cout << "in pass user empty" << std::endl;
-	std::cout << message << std::endl;
+
     if(pass.empty()){   
         std::string errorPass = "ERROR : pass is empty\r\n";
         send(user->getSocket(), errorPass.c_str(), errorPass.length(), 0);
         return 1;
     }
-	std::cout << "pass empty" << std::endl;
     if(pass != this->_password){
         std::string badPass = "ERROR : bad password\r\n";
         send(user->getSocket(), badPass.c_str(), badPass.length(), 0);
@@ -205,54 +213,54 @@ int    Server::CommandPASS(User *user, std::string &message){
     }
 
     user->setIsRegister(true);
-	send(user->getSocket(), "OK\r\n", 4, 0);	
+	send(user->getSocket(), "OK\r\n", 4, 0); // PEUT ETRE DELETE OU MODIFIER
     return(0);
 }
 
-void    Server::CommandCAP(User *user){
+void    Server::CommandCAP(User *user, std::string &code){
 	
-	std::string reponse = ":server CAP * LS\r\n";
-    send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
+	std::string subcommand = code.substr(1);
 
-    /*std::string command = user->getbuffCommand();
-    
-    std::stringstream ss(command);
-    std::string subcommand, params;
-
-    ss >> subcommand;
-
-    std::getline(ss, params);
-    if(!params.empty()){
-        params = params.substr(1);
-    } 
     if(subcommand == "LS"){
         std::string capaciti = "multi-prefix";
-        std::string reponse = ":server CAP * LS : " + capaciti + "\r\n";
-        send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
-    }
-    else if(subcommand == "REQ"){
-        
-        if(params == "multiprefix"){
-            std::string reponse = ":server CAP * ACK : " + params + "\r\n";
-            send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
-        }
-        else{
-            std::string reponse = ":server CAP * NAK : " + params + "\r\n";
-            send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
-        }
-    }
-    else if(subcommand == "ACK"){
-        std::string reponse = ":server CAP * ACK : " + params + "\r\n";
+        std::string reponse = this->_name + " CAP * LS :\r\n";
         send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
     }
     else if(subcommand == "END"){
-        return;
+		std::string response = "001 " + user->getNickname() + " :" + user->getNickname() + "\r\n";
+		send(user->getSocket(), response.c_str(), response.length(), 0);
     }
     else{
-        std::string reponse = "command not found\r\n";
+        std::string reponse = "ERROR : CAP param not recognized\r\n";
         send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
-    }*/
+    }
 }
+
+void Server::CommandWHOIS(User* user, std::string& nickname)
+{
+	std::string nick = nickname.substr(1);
+	std::string response;
+	std::map<std::string, User*>::iterator it = this->nicknameMap.find(nick);
+
+	if (it != this->nicknameMap.end())
+	{
+		User* target = it->second;
+		response += ":" + this->_name + " 311 " + user->getNickname() + " " + target->getNickname() + " " +
+		            target->getUsername() + " " + target->getHostname() + " * " + target->getRealName() + "\r\n";
+		response += ":" + this->_name + " 312 " + user->getNickname() + " " + target->getNickname() + " " +
+		            this->_name + "\r\n";
+	}
+	else
+	{
+		response += ":" + this->_name + " 401 " + user->getNickname() + " " + nick + " :No such nick/channel\r\n";
+	}
+
+	response += ":" + this->_name + " 318 " + user->getNickname() + " " + nick + " :End of /WHOIS list\r\n";
+
+	send(user->getSocket(), response.c_str(), response.length(), 0);
+}
+
+
 /*
 void    Server::CommandNAMES(User *user, Channel *channel){
     

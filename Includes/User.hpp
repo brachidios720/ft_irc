@@ -1,5 +1,6 @@
 #pragma once
 #include "Include.hpp"
+#include <string>
 
 class User
 {
@@ -17,11 +18,14 @@ class User
 		std::string getID(void);
 		std::string getbuffCommand(void);
 		std::string getIp(void);
+		std::string	getRealName();
+		bool getIsRegisted();
 		void setisDown(int down);
 		void setUsername(std::string username);
 		void setNickname(std::string nickname);
 		void setChannel(std::string channel);
 		void setHostname(std::string hostname);
+		void setRealName(std::string realname);
 		void setGetNick();
 		void setbuffCommand(std::string command);
 		void joinbuffCommand(std::string command);
@@ -38,5 +42,6 @@ class User
 		std::string _hostname;
 		std::string _buffCommand;
 		std::string _ip;
+		std::string _realname;
 		bool _getNick;
 };

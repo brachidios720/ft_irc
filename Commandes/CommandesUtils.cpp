@@ -1,7 +1,7 @@
 #include "../Includes/Server.hpp"
 
 bool    Server::isNickAvailable(const std::string& nickname){
-        return(NicknameMap.find(nickname) == NicknameMap.end());
+        return(nicknameMap.find(nickname) == nicknameMap.end());
 }
 /*
 std::string     Server::extractChannelName(const std::string &message){

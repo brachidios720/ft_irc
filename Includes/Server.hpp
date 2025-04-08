@@ -35,6 +35,7 @@ class Server
 		Server();
 		int _port;
 		const std::string _password;
+		const std::string _name;
 		s_socket SClient;
 		s_socket SServer;
 
@@ -42,7 +43,7 @@ class Server
 		int numConnection;
 
 		std::map<int, User*> UserTab;
-		std::map<std::string, User*> NicknameMap;
+		std::map<std::string, User*> nicknameMap;
 		std::map<std::string, Channel*> ChannelTab;
 		
 		void	HandleMessage(User *user, int num, std::vector<pollfd> client_fds);
@@ -51,22 +52,23 @@ class Server
 		bool 	Server_start();
 		bool	Server_loop();
 		void 	RemoveUser(int fd);
-		void	CommandCAP(User *user); //
-		int		CommandPASS(User *user, std::string &pass);//
-		void	CommandNICK(User *user, std::string &message);//
-		void	CommandJOIN(User *user, std::string &message);//
+		void	CommandCAP(User *user, std::string &code);
+		int		CommandPASS(User *user, std::string &pass);
+		void	CommandNICK(User *user, std::string &message);
+		void	CommandJOIN(User *user, std::string &message);
 		void 	CommandJOIN2(User *user, std::string &nameChannel, std::string &mdp);
-		void	CommandUSER(User *user, std::string &message);//
+		void	CommandUSER(User *user, std::string &message);
 		void	CommandNAMES(User *user, std::string &channel);//CommandNAMES(User *user, Channel *channel);/
-		void	CommandPRIVMSG(User *user, std::string &message);//
-		void	CommandPART(User *user, std::string &message);//
-		void	CommandMODE(User *user, std::string &message);//
+		void	CommandPRIVMSG(User *user, std::string &message);
+		void	CommandPART(User *user, std::string &message);
+		void	CommandMODE(User *user, std::string &message);
 		void	CommandMODE2(User *user, char channel, int status, std::string supmode, std::string nameChannel);
-		void	CommandTOPIC(User *user, std::string &message);//
-		void	CommandINVITE(User *user, std::string &message);//
-		void	CommandKICK(User *user, std::string &message);//
-		void	CommandPING(User *user, std::string &message);//
+		void	CommandTOPIC(User *user, std::string &message);
+		void	CommandINVITE(User *user, std::string &message);
+		void	CommandKICK(User *user, std::string &message);
+		void	CommandPING(User *user, std::string &message);
 		void	CommandQUIT(User *user, std::string &message);
+		void	CommandWHOIS(User *user, std::string &message);
 /*
 		void 	ModeK(User *user, Channel *channel, std::string message, int i);//
 		void 	ModeI(User *user, Channel *channel, int i);//
@@ -85,5 +87,5 @@ class Server
 		Channel	*FindChannel(std::string search);
 		static void	handle_signal(int signal);
 
-		void	parseCommand(const std::string command, User *user);
+		void	parseCommand(const std::vector<std::string> &command, User *user);
 };

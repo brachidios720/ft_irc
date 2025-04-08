@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/08 15:35:30 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/08 19:16:22 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ Server::Server(){
 
 
 Server::Server(std::string const &port, std::string const &password)
-	:_password(password) , numConnection(0)
+	:_password(password), _name(":myIRC"), numConnection(0)
 {
 	if (isValidPort(port))
 	{
@@ -54,6 +54,25 @@ bool Server::isValidPort(const std::string& portStr)
 		return false;
     return true;
 }
+
+std::vector<std::string> splitByCRLF(const std::string& input) {
+    std::vector<std::string> lines;
+    size_t start = 0;
+    size_t end;
+
+    while ((end = input.find("\r\n", start)) != std::string::npos) {
+        lines.push_back(input.substr(start, end - start));
+        start = end + 2; // skip over the "\r\n"
+    }
+
+    // In case the last line doesn't end in \r\n
+    if (start < input.length()) {
+        lines.push_back(input.substr(start));
+    }
+
+    return lines;
+}
+
 
 static void signalHandler(int signum) {
     std::cout << "\nReceived SIGINT (" << signum << "). Shutting down server gracefully..." << std::endl;
@@ -153,9 +172,9 @@ void Server::serverLoop()
                 }
                 buffer[bytes] = '\0';
 
-                std::cout << "Received from client fd " << poll_fds->at(i).fd << ": |" << buffer << "|\r\n" << std::endl;
+                std::cout << "Received from client fd " << poll_fds->at(i).fd << ": |" << buffer << "|" << std::endl;
                 User *callingUser = UserTab[poll_fds->at(i).fd];
-                parseCommand(buffer, callingUser);
+                parseCommand(splitByCRLF(buffer), callingUser);
                 
                 //write(poll_fds->at(i).fd, RESPONSE TO USER, RESPONSE SIZE); RESPONSE BACK TO USER IF NEEDED
             }
@@ -163,69 +182,44 @@ void Server::serverLoop()
     }
 }
 
-std::vector<std::string> splitByCRLF(const std::string& input) {
-    std::vector<std::string> lines;
-    size_t start = 0;
-    size_t end;
 
-    while ((end = input.find("\r\n", start)) != std::string::npos) {
-        lines.push_back(input.substr(start, end - start));
-        start = end + 2; // skip over the "\r\n"
-    }
-
-    // In case the last line doesn't end in \r\n
-    if (start < input.length()) {
-        lines.push_back(input.substr(start));
-    }
-
-    return lines;
-}
-
-void Server::parseCommand(const std::string command, User *user)
+void Server::parseCommand(const std::vector<std::string> &commands, User *user)
 {
-    std::string commandName;
-    std::string message;
-    std::stringstream ss(command);
-    ss >> commandName;
-    std::getline(ss, message);
-    if (commandName == "CAP")
-        CommandCAP(user);
-    else if (commandName == "PASS")
-        CommandPASS(user, message);
-    else if (commandName == "NICK")
-        CommandNICK(user, message);
-    else if (commandName == "JOIN")
-        CommandJOIN(user, message);
-    else if (commandName == "USER")
-        CommandUSER(user, message);
-    else if (commandName == "NAMES")
-        CommandNAMES(user, message);
-    else if (commandName == "PRIVMSG")
-        CommandPRIVMSG(user, message);
-    else if (commandName == "PART")
-        CommandPART(user, message);
-    else if (commandName == "MODE")
-        CommandMODE(user, message);
-    else
+    for (unsigned int i = 0; i < commands.size(); i++)
     {
-        std::string err = "ERROR: Command not found\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
+        std::string commandName;
+        std::string message;
+        std::stringstream ss(commands[i]);
+        ss >> commandName;
+        std::getline(ss, message);
+        if (commandName == "CAP")
+            CommandCAP(user, message);
+        else if (commandName == "PASS")
+            CommandPASS(user, message);
+        else if (commandName == "NICK")
+            CommandNICK(user, message);
+        else if (commandName == "JOIN")
+            CommandJOIN(user, message);
+        else if (commandName == "USER")
+            CommandUSER(user, message);
+        else if (commandName == "NAMES")
+            CommandNAMES(user, message);
+        else if (commandName == "PRIVMSG")
+            CommandPRIVMSG(user, message);
+        else if (commandName == "PART")
+            CommandPART(user, message);
+        else if (commandName == "MODE")
+            CommandMODE(user, message);
+		else if (commandName == "WHOIS" || commandName == "WHOWAS")
+			CommandWHOIS(user, message);
+		else if (commandName == "PING")
+			CommandPING(user, message);
+        else
+        {
+            std::string err = "ERROR: Command not found\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
+        }
     }
-    
-}
-
-
-Channel *Server::FindChannel(std::string search)
-{
-	std::map<std::string, Channel *>::iterator it;
-	for (it = ChannelTab.begin(); it != ChannelTab.end(); ++it)
-	{
-		std::string name = it->first;
-		Channel *channel = it->second;
-		if (search == name)
-			return channel;
-	}
-	return NULL;
 }
 
 Server::~Server()

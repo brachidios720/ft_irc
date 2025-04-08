@@ -6,7 +6,7 @@
 /*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 23:19:29 by hehuang           #+#    #+#             */
-/*   Updated: 2025/03/09 19:15:30 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/08 19:02:18 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,9 @@ User::User(int socket): _socket(socket)
     this->_channel = "";
     this->_nickname = "";
     this->_hostname = "";
+	this->_realname = "";
     this->_getNick = false;
+	this->_isregistered = false;
 }
 
 bool User::operator==(const User &other) const {
@@ -83,6 +85,16 @@ std::string	User::getIp()
 	return this->_ip;
 }
 
+std::string	User::getRealName()
+{
+	return this->_realname;
+}
+
+bool	User::getIsRegisted()
+{
+	return this->_isregistered;
+}
+
 //SETTER
 
 void	User::setisDown(int down)
@@ -108,6 +120,11 @@ void	User::setChannel(std::string channel)
 void	User::setHostname(std::string hostname)
 {
 	this->_hostname = hostname;
+}
+
+void	User::setRealName(std::string realname)
+{
+	this->_realname = realname;
 }
 
 void	User::setGetNick()
