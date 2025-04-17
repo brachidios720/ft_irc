@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Commandes.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
+/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/08 19:06:18 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/17 14:25:29 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,9 +34,57 @@ void	Server::CommandNICK(User *user, std::string &message)
 };*/
 void	Server::CommandJOIN(User *user, std::string &message)
 {
-	(void) user;
-	std::string msg = "RECEIVED "+ message + "\r\n";
-    send(user->getSocket(), msg.c_str(), msg.length(), 0);
+    std::cout << "JOIN received | message : " << message << std::endl;
+    std::string canal = message.substr(1);
+    if(canal[0] != '#' && canal[0] != '&'){
+        std::cout << "DEBUG: canal = " << canal << " ERROR: canal name norme error" << std::endl;
+        std::string normErr = "ERROR :Chanel name norme error\r\n";
+        send(user->getSocket(), normErr.c_str(), normErr.length(), 0);
+        return;
+    }
+    if(canal.empty()){
+        std::cout << "DEBUG: canal = " << canal << " ERROR: canal name empty" << std::endl;
+        std::string empty = "ERROR :Channel cannot be empty\r\n";
+        send(user->getSocket(), empty.c_str(), empty.length(), 0);
+        return;
+    }
+    if(canal.length() > 32){
+        std::cout << "DEBUG: canal = " << canal << " ERROR: canal name too long" << std::endl;
+        std::string toHigh = "ERROR :Channel size to big\r\n";
+        send(user->getSocket(), toHigh.c_str(), toHigh.length(), 0);
+        return;
+    }
+
+    std::cout << "DEBUG: canal = " << canal << std::endl;
+
+    Channel *channel = FindChannel(canal);
+    if(!channel){
+        std::string create = "Channel " + canal + " created\r\n";
+        std::cout << create << std::endl;
+        channel = new Channel(canal);
+        ChannelTab[canal] = channel;
+    }
+    if(channel->isInviteOnly() && !channel->IsInvite(user)){
+        std::string err = "ERROR : you are not invite to join this channel\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+    }
+    std::string mdp = extractMdp(message);
+    if(!channel->getPassword().empty()){
+        if(mdp.empty() || channel->getPassword() != mdp){
+            std::string mpdError = "ERROR :invalid password\r\n";
+            send(user->getSocket(), mpdError.c_str(), mpdError.length(), 0);
+            return;
+        }
+    }
+    std::string reponse = "Welcome to the channel " + canal + "\r\n";
+    send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
+    user->setChannel(canal);
+    channel->AddUser(user, mdp, 0);
+
+    std::string valid = user->getNickname() + " JOIN " + canal + "\r\n";
+    send(user->getSocket(), valid.c_str(), valid.length(), 0); 
+
+    
 };
 /*
 void	Server::CommandUSER(User *user, std::string &message)
@@ -44,18 +92,35 @@ void	Server::CommandUSER(User *user, std::string &message)
 (void) user;
 		std::cout << "USER received | message : " << message << std::endl;
 };*/
-void	Server::CommandNAMES(User *user, std::string &str)
+void    Server::CommandNAMES(User *user, std::string &str)
 {
-	(void) user;
-	std::string msg = "RECEIVED "+ str + "\r\n";
-    send(user->getSocket(), msg.c_str(), msg.length(), 0);
-};
-void	Server::CommandPRIVMSG(User *user, std::string &message)
+    std::cout << "NAMES received | message : " << str << std::endl;
+    Channel *channel = FindChannel(str);
+    if(!channel){
+        std::string reponse = ":channel not found\r\n";
+        send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
+        return;
+    }
+    std::string reponse = ": " + channel->getName() + " user : ";
+    std::vector<std::string> nicknames = channel->getUserNicknames();
+    for(std::vector<std::string>::iterator it = nicknames.begin(); it != nicknames.end(); ++it){
+        reponse += *it + " ";
+    }
+    reponse += "\r\n";
+    send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
+    std::string listefinish = channel->getName() + " end of the liste\r\n";
+    send(user->getSocket(), listefinish.c_str(), listefinish.length(), 0);
+    std::cout << "DEBUG: NAMES = " << reponse << std::endl;
+    std::cout << "DEBUG: NAMES = " << listefinish << std::endl;
+    std::cout << "DEBUG: NAMES = " << channel->getName() << std::endl;
+    std::cout << "DEBUG: NAMES = " << channel->getUserNicknames().size() << std::endl;
+}
+/*void	Server::CommandPRIVMSG(User *user, std::string &message)
 {
-(void) user;
+    (void) user;
 	std::string msg = "RECEIVED "+ message + "\r\n";
     send(user->getSocket(), msg.c_str(), msg.length(), 0);
-};
+};*/
 void	Server::CommandPART(User *user, std::string &message)
 {
 (void) user;
@@ -119,8 +184,8 @@ void    Server::CommandNICK(User *user, std::string &message){
     send(user->getSocket(), sucess.c_str(), sucess.length(), 0);
 }
 
-/*
-void    Server::CommandJOIN(User *user, std::string &message){
+
+/*void    Server::CommandJOIN(User *user, std::string &message){
 
     std::string canal = message.substr(1);
 
@@ -142,6 +207,8 @@ void    Server::CommandJOIN(User *user, std::string &message){
 
     Channel *channel = FindChannel(canal);
     if(!channel){
+        std::string create = "Channel " + canal + " created\r\n";
+        std::cout << create << std::endl;
         channel = new Channel(canal);
         ChannelTab[canal] = channel;
     }
@@ -157,6 +224,8 @@ void    Server::CommandJOIN(User *user, std::string &message){
             return;
         }
     }
+    std::string reponse = "Welcome to the channel " + canal + "\r\n";
+    send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
     user->setChannel(canal);
     channel->AddUser(user, mdp, 0);
 
@@ -282,32 +351,42 @@ void    Server::CommandNAMES(User *user, Channel *channel){
     std::string listefinish = channel->getName() + "end of the liste\r\n";
     send(user->getSocket(), listefinish.c_str(), listefinish.length(), 0);
 }
-*//*
-void    Server::CommandPRIVMSG(User *user, std::string message){
+*/
+void    Server::CommandPRIVMSG(User *user, std::string &message){
 
     std::stringstream ss(message);
     std::string target, pvt;
 
-    ss << target;
-    getline(ss, pvt);
+    ss >> target;
+    std::getline(ss, pvt);
+    if(target[0] == ':')
+        target = target.substr(1);
+    if(pvt[0] == ':')
+        pvt = pvt.substr(1);
 
     if(target.empty()){
         std::string err = ":user not found\r\n";
+        std::cout << err << std::endl;
         send(user->getSocket(), err.c_str(), err.length(), 0);
     }
     if(pvt.empty()){
         std::string err = ":write something to send\r\n";
+        std::cout << err << std::endl;
         send(user->getSocket(), err.c_str(), err.length(), 0);
     }
+    std::cout << "DEBUG: target = '"<< target << "'" << std::endl;
     if(target[0] == '#' ){
         Channel *channel = FindChannel(target);
         if(!channel){
             std::string err =  target + " :channel not found\r\n";
+            std::cout << err << std::endl;
             send(user->getSocket(), err.c_str(), err.length(), 0);
             return;
         }
         else{
-            std::string reponse = ":" + user->getNickname() + " send PRVTMSG " + target + " :" + pvt.substr(1) + "\r\n" ;
+            std::string reponse = ":" + user->getNickname() + " PRIVMSG " + target + " :" + pvt.substr(1) + "\r\n";
+            std::cout << reponse << std::endl;
+            channel->SendMsg(user, reponse);
         }
     }
     else{
@@ -326,12 +405,13 @@ void    Server::CommandPRIVMSG(User *user, std::string message){
         }
         else {
             std::string reponse = target + " not found\r\n";
+            std::cout << reponse << std::endl;
             send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
         }
     }
 
 }
-*//*
+/*
 void    Server::CommandPART(User *user, std::string message){
 
     std::stringstream ss(message);

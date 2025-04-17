@@ -9,7 +9,7 @@
 
 static bool Stop = false;
 
-#define nullptr 0
+//#define nullptr 0
 
 struct s_socket
 {

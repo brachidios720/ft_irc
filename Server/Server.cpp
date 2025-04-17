@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
+/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/08 19:16:22 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/16 19:14:36 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -191,6 +191,7 @@ void Server::parseCommand(const std::vector<std::string> &commands, User *user)
         std::string message;
         std::stringstream ss(commands[i]);
         ss >> commandName;
+        std::cout << "Received command :" << commandName << std::endl;
         std::getline(ss, message);
         if (commandName == "CAP")
             CommandCAP(user, message);
@@ -234,6 +235,7 @@ Server::~Server()
 
 Channel	*Server::FindChannel(std::string search)
 {
+    std::cout << "DEBUG: Searching for channel: " << search << std::endl;
     for (std::map<std::string, Channel *>::iterator it = ChannelTab.begin(); it != ChannelTab.end(); ++it)
     {
         if (it->first == search)
