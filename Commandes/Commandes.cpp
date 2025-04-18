@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/18 16:53:07 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/18 17:51:06 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,8 +42,8 @@ void	Server::CommandJOIN(User *user, std::string &message)
 	ss >> mdp;
 
 	if(canal[0] != '#' && canal[0] != '&'){
-		std::cout << "DEBUG: canal = " << canal << " ERROR: canal name norme error" << std::endl;
-		std::string normErr = "ERROR :Chanel name norme error\r\n";
+		std::cout << "DEBUG: canal = " << canal << " ERROR: Channel name norme error" << std::endl;
+		std::string normErr = "ERROR :Channel name norme error\r\n";
 		send(user->getSocket(), normErr.c_str(), normErr.length(), 0);
 		return;
 	}
@@ -70,9 +70,10 @@ void	Server::CommandJOIN(User *user, std::string &message)
 		ChannelTab[canal] = channel;
 		isFirst = 1;
 	}
-	if(channel->isInviteOnly() && !channel->IsInvite(user)){
-		std::string err = "ERROR : you are not invite to join this channel\r\n";
+	if (channel->isInviteOnly() && !channel->IsInvite(user)) {
+		std::string err = ":server 473 " + user->getNickname() + " " + channel->getName() + " :Cannot join channel (+i)\r\n";
 		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
 	}
 	if(!channel->getPassword().empty()){
 		if(mdp.empty() || channel->getPassword() != mdp){

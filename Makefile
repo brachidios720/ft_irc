@@ -12,8 +12,7 @@ SERVER_SOURCES = ./Server/Server.cpp \
 				 ./Server/Channel.cpp \
 
 COMMANDES_SOURCES = ./Commandes/Commandes.cpp \
-					./Commandes/CommandesUtils.cpp \
-#					./Commandes/Channel.cpp
+					./Commandes/CommandesUtils.cpp 
 
 
 SERVER_OBJ_PATH = obj/Server/

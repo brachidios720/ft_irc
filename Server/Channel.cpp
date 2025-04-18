@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:27:49 by tlegendr          #+#    #+#             */
-/*   Updated: 2025/04/17 18:57:11 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/18 17:40:50 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,7 @@ void Channel::SetPassword(std::string password)
 
 void Channel::SetMode(char mode, bool x)
 {
+    std::cout << "DEBUG: Setting mode " << mode << " to " << x << std::endl;
     if (mode == 'k')
         _modeK = x;
     else if (mode == 't')
@@ -86,6 +87,7 @@ void Channel::SetMode(char mode, bool x)
 
 bool Channel::getMode(char mode)
 {
+    std::cout << "DEBUG: Getting mode " << mode << std::endl;
     if (mode == 'k')
         return _modeK;
     else if (mode == 't')
