@@ -15,8 +15,19 @@
 int main (int argc, char *argv[]) {
 	if (argc == 3)
 	{
-		Server a = Server(argv[1], argv[2]);
-		a.run();
+		try
+		{
+			Server a = Server(argv[1], argv[2]);
+			a.run();
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
+	}
+	else
+	{
+		std::cerr << "Parameters needed : ./ircserv port password" << '\n';
 	}
 	return 0;
 }
