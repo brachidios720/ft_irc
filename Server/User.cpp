@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   User.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
+/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 23:19:29 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/17 19:08:07 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/18 22:40:19 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,9 @@ User::User(int socket): _socket(socket)
     this->_nickname = "";
     this->_hostname = "";
 	this->_realname = "";
-    this->_getNick = false;
+    this->_isNickSet = false;
+	this->_isPassOK = false;
+	this->_isUserSet = false;
 	this->_isregistered = false;
 }
 
@@ -64,9 +66,19 @@ int	User::getisDown()
 	return this->_isDown;
 }
 
-bool	User::getGetNick()
+bool	User::getIsNickSet()
 {
-	return this->_getNick;
+	return this->_isNickSet;
+}
+
+bool	User::getIsPassOK()
+{
+	return this->_isPassOK;
+}
+
+bool	User::getIsUserSet()
+{
+	return this->_isUserSet;
 }
 
 std::string	User::getID()
@@ -127,12 +139,19 @@ void	User::setRealName(std::string realname)
 	this->_realname = realname;
 }
 
-void	User::setGetNick()
+void	User::setIsNickSet(bool set)
 {
-	if (this->_getNick)
-		this->_getNick = false;
-	else
-		this->_getNick = true;
+	this->_isNickSet = set;
+}
+
+void	User::setIsPassOK(bool set)
+{
+	this->_isPassOK = set;
+}
+
+void	User::setIsUserSet(bool set)
+{
+	this->_isUserSet = set;
 }
 
 void	User::setbuffCommand(std::string command)

@@ -14,7 +14,9 @@ class User
 		std::string getHostname(void);
 		int getSocket(void);
 		int getisDown(void);
-		bool getGetNick(void);
+		bool getIsNickSet(void);
+		bool getIsPassOK(void);
+		bool getIsUserSet(void);
 		std::string getID(void);
 		std::string getbuffCommand(void);
 		std::string getIp(void);
@@ -26,7 +28,9 @@ class User
 		void setChannel(std::string channel);
 		void setHostname(std::string hostname);
 		void setRealName(std::string realname);
-		void setGetNick();
+		void setIsNickSet(bool set);
+		void setIsPassOK(bool set);
+		void setIsUserSet(bool set);
 		void setbuffCommand(std::string command);
 		void joinbuffCommand(std::string command);
 		void incrementisDown();
@@ -44,5 +48,7 @@ class User
 		std::string _buffCommand;
 		std::string _ip;
 		std::string _realname;
-		bool _getNick;
+		bool _isNickSet;
+		bool _isPassOK;
+		bool _isUserSet;
 };

@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/18 21:23:57 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/18 22:50:18 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -199,9 +199,8 @@ void    Server::CommandNICK(User *user, std::string &message){
 	if (!user->getIsRegistered())
 	{
 		std::cout << "DEBUG: user is not registered, nickname = '" << nickname << "'" << std::endl;
-		std::string sucess = this->_name + " 001 " + nickname + " :Welcome to the IRC server, " + nickname + "!\r\n";
-		send(user->getSocket(), sucess.c_str(), sucess.length(), 0);
-		user->setIsRegister(true);
+		CanRegister(user);
+		//user->setIsRegister(true);
 		//return (user->setIsRegister(true));
 	}
 
@@ -212,58 +211,20 @@ void    Server::CommandNICK(User *user, std::string &message){
 	
 	this->nicknameMap[nickname] = user;
 	user->setNickname(nickname);
-	std::string sucess = ":" + oldNick + " NICK :" + nickname + "\r\n";
-	send(user->getSocket(), sucess.c_str(), sucess.length(), 0);
+	user->setIsNickSet(true);
+	std::string success = ":" + oldNick + " NICK :" + nickname + "\r\n";
+	send(user->getSocket(), success.c_str(), success.length(), 0);
 }
 
-
-/*void    Server::CommandJOIN(User *user, std::string &message){
-
-	std::string canal = message.substr(1);
-
-	if(canal[0] != '#' || canal[0] != '&'){
-		std::string normErr = "ERROR :Chanel name norme error\r\n";
-		send(user->getSocket(), normErr.c_str(), normErr.length(), 0);
-		return;
+void Server::CanRegister(User *user)
+{
+	if (user->getIsPassOK() && user->getIsUserSet() && user->getIsNickSet())
+	{
+		user->setIsRegister(true);
+		std::string welcomeMessage = ":" + this->_name + " 001 " + user->getNickname() + " :Welcome to the IRC server, " + user->getNickname() + "!\r\n";
+		send(user->getSocket(), welcomeMessage.c_str(), welcomeMessage.length(), 0);
 	}
-	if(canal.empty()){
-		std::string empty = "ERROR :Channel cannot be empty\r\n";
-		send(user->getSocket(), empty.c_str(), empty.length(), 0);
-		return;
-	}
-	if(canal.length() > 32){
-		std::string toHigh = "ERROR :Channel size to big\r\n";
-		send(user->getSocket(), toHigh.c_str(), toHigh.length(), 0);
-		return;
-	}
-
-	Channel *channel = FindChannel(canal);
-	if(!channel){
-		std::string create = "Channel " + canal + " created\r\n";
-		std::cout << create << std::endl;
-		channel = new Channel(canal);
-		ChannelTab[canal] = channel;
-	}
-	if(channel->isInviteOnly() && !channel->IsInvite(user)){
-		std::string err = "ERROR : you are not invite to join this channel\r\n";
-		send(user->getSocket(), err.c_str(), err.length(), 0);
-	}
-	std::string mdp = extractMdp(message);
-	if(!channel->getPassword().empty()){
-		if(mdp.empty() || channel->getPassword() != mdp){
-			std::string mpdError = "ERROR :invalid password\r\n";
-			send(user->getSocket(), mpdError.c_str(), mpdError.length(), 0);
-			return;
-		}
-	}
-	std::string reponse = "Welcome to the channel " + canal + "\r\n";
-	send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
-	user->setChannel(canal);
-	channel->AddUser(user, mdp, 0);
-
-	std::string valid = user->getNickname() + " JOIN " + canal + "\r\n";
-	send(user->getSocket(), valid.c_str(), valid.length(), 0); 
-}*/
+}
 
 void    Server::CommandUSER(User *user, std::string &message){
 
@@ -287,16 +248,14 @@ void    Server::CommandUSER(User *user, std::string &message){
 		user->setHostname(hostname);
 		user->setUsername(username);
 		user->setRealName(realname);
-
-		std::string reponse = "Welcome to IRC " + user->getNickname() + " " + username + "\r\n";
-		send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
+		user->setIsUserSet(true);
+		CanRegister(user);
 }
 
 int    Server::CommandPASS(User *user, std::string &message){
-	
 
 	std::string pass = message.substr(1);
-	if(!user->getUsername().empty()){
+	if(user->getIsRegistered()){
 		std::string errorRegis = "ERROR : You're already on our server\r\n";
 		send(user->getSocket(), errorRegis.c_str(), errorRegis.length(), 0);
 		return 1;
@@ -307,13 +266,15 @@ int    Server::CommandPASS(User *user, std::string &message){
 		send(user->getSocket(), errorPass.c_str(), errorPass.length(), 0);
 		return 1;
 	}
+	
 	if(pass != this->_password){
 		std::string badPass = "ERROR : bad password\r\n";
 		send(user->getSocket(), badPass.c_str(), badPass.length(), 0);
 		return 1;
 	}
-
-	send(user->getSocket(), "OK\r\n", 4, 0); // PEUT ETRE DELETE OU MODIFIER
+	user->setIsPassOK(true);
+	send(user->getSocket(), "OK\r\n", 4, 0); 
+	CanRegister(user);
 	return(0);
 }
 

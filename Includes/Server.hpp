@@ -71,6 +71,7 @@ class Server
 		void	CommandPING(User *user, std::string &message);
 		void	CommandQUIT(User *user, std::string &message);
 		void	CommandWHOIS(User *user, std::string &message);
+		void	CanRegister(User *user);
 /*
 		void 	ModeK(User *user, Channel *channel, std::string message, int i);//
 		void 	ModeI(User *user, Channel *channel, int i);//
