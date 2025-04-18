@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/18 17:51:06 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/18 21:23:57 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ void	Server::CommandJOIN(User *user, std::string &message)
 	}
 	if(!channel->getPassword().empty()){
 		if(mdp.empty() || channel->getPassword() != mdp){
-			std::string mpdError = "ERROR :invalid password\r\n";
+			std::string mpdError = ":server 475 " + user->getNickname() + " " + canal + " :Invalid password\r\n";
 			send(user->getSocket(), mpdError.c_str(), mpdError.length(), 0);
 			return;
 		}
@@ -95,11 +95,9 @@ void	Server::CommandJOIN(User *user, std::string &message)
 	}
 	else
 	{
-		std::string topic = "TOPIC " + canal + channel->getTopic() + "\r\n";
+		std::string topic = ":server 332 " + user->getNickname() + " " + canal + channel->getTopic() + "\r\n";
 		send(user->getSocket(), topic.c_str(), topic.length(), 0);
 	}
-
-	
 };
 
 void Server::CommandPART(User* user, std::string& message)
@@ -175,7 +173,8 @@ void    Server::CommandPING(User *user, std::string &message)
 void    Server::CommandNICK(User *user, std::string &message){
 
 	std::string nickname = message.substr(1);
-
+	std::cout << "NICK received | nickname : '" << nickname << "'" << std::endl;
+	
 	if(nickname.empty()){
 		std::cout << "empty nick" << std::endl;
 		std::string errorMessage = "ERROR :Nickname cannot be empty\r\n";
@@ -191,16 +190,19 @@ void    Server::CommandNICK(User *user, std::string &message){
 	}
 
 	if(!isNickAvailable(nickname)){
-		std::string errorDouble = "ERROR :Nickname already used\r\n";
-		send(user->getSocket(), errorDouble.c_str(), errorDouble.length(), 0);
+		std::cout << "nickname already used, nickname = '" << nickname << "'" << std::endl;
+		std::string errorNick = ":server 433 * " + nickname + " :Nickname is already in use\r\n";
+		send(user->getSocket(), errorNick.c_str(), errorNick.length(), 0);
 		return;
 	}
 
 	if (!user->getIsRegistered())
 	{
+		std::cout << "DEBUG: user is not registered, nickname = '" << nickname << "'" << std::endl;
 		std::string sucess = this->_name + " 001 " + nickname + " :Welcome to the IRC server, " + nickname + "!\r\n";
 		send(user->getSocket(), sucess.c_str(), sucess.length(), 0);
-		return (user->setIsRegister(true));
+		user->setIsRegister(true);
+		//return (user->setIsRegister(true));
 	}
 
 	std::string oldNick = user->getNickname();
@@ -266,7 +268,7 @@ void    Server::CommandNICK(User *user, std::string &message){
 void    Server::CommandUSER(User *user, std::string &message){
 
 		if(!user->getUsername().empty()){
-			std::string errorRegis = "ERROR : You cannot registerter\r\n";
+			std::string errorRegis = "ERROR : You cannot register\r\n";
 			send(user->getSocket(), errorRegis.c_str(), errorRegis.length(), 0);
 			return;
 		}
@@ -311,7 +313,6 @@ int    Server::CommandPASS(User *user, std::string &message){
 		return 1;
 	}
 
-	user->setIsRegister(true);
 	send(user->getSocket(), "OK\r\n", 4, 0); // PEUT ETRE DELETE OU MODIFIER
 	return(0);
 }
@@ -510,8 +511,10 @@ void    Server::CommandMODE(User *user, std::string &message){
 			else
 				channel->changeOp(targetUser, 0);
 		}
-		else if (mode[1] == 'k')
+		else if (mode[1] == 'k') {
+			channel->SetMode(mode[1], mode[0] == '+');
 			channel->SetPassword(param);
+		}
 		else if (mode[1] == 'i')
 			channel->SetMode(mode[1], mode[0] == '+');
 		else if (mode[1] == 't')

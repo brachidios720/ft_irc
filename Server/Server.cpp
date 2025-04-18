@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
+/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/17 17:44:16 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/18 21:48:46 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,49 +186,118 @@ void Server::serverLoop()
 
 void Server::parseCommand(const std::vector<std::string> &commands, User *user)
 {
+    int isPassOK = 0;
     for (unsigned int i = 0; i < commands.size(); i++)
     {
+        int commandHandled = 0;
+        if (isPassOK == 1)
+        {
+            std::cout << "DEBUG: User " << user->getNickname() << " is disconnected." << std::endl;
+            close(user->getSocket());
+            for (size_t j = 0; j < poll_fds->size(); j++)
+            {
+                if (poll_fds->at(j).fd == user->getSocket())
+                {
+                    poll_fds->erase(poll_fds->begin() + j);
+                    break;
+                }
+            }
+            UserTab.erase(user->getSocket());
+            delete user;
+            user = nullptr;
+            break;
+        }
         std::string commandName;
         std::string message;
         std::stringstream ss(commands[i]);
         ss >> commandName;
-        std::cout << "Received command :" << commandName << " from user " << user->getNickname() << std::endl;
         std::getline(ss, message);
+        std::cout << "Received command :" << commandName << " from user " << user->getNickname() << " Message: " + message << std::endl;
         if (commandName == "CAP")
+        {
             CommandCAP(user, message);
+            commandHandled = 1;
+        }
         else if (commandName == "PASS")
-            CommandPASS(user, message);
+        {
+            isPassOK = CommandPASS(user, message);
+            commandHandled = 1;
+        }
         else if (commandName == "NICK")
+        {
             CommandNICK(user, message);
+            commandHandled = 1;
+        }
         else if (commandName == "USER")
+        {
+            commandHandled = 1;
             CommandUSER(user, message);
+        }
         if (user->getIsRegistered())
         {
             if (commandName == "JOIN")
+            {
                 CommandJOIN(user, message);
+                commandHandled = 1;
+            }
             else if (commandName == "NAMES")
+            {
                 CommandNAMES(user, message);
+                commandHandled = 1;
+            }
             else if (commandName == "PRIVMSG")
+            {
                 CommandPRIVMSG(user, message);
+                commandHandled = 1;
+            }
             else if (commandName == "PART")
+            {
                 CommandPART(user, message);
+                commandHandled = 1;
+            }
             else if (commandName == "MODE")
+            {
                 CommandMODE(user, message);
+                commandHandled = 1;
+            }
             else if (commandName == "WHOIS" || commandName == "WHOWAS")
+            {
                 CommandWHOIS(user, message);
+                commandHandled = 1;
+            }
             else if (commandName == "PING")
+            {
                 CommandPING(user, message);
+                commandHandled = 1;
+            }
             else if (commandName == "INVITE")
+            {
                 CommandINVITE(user, message);
+                commandHandled = 1;
+            }
             else if (commandName == "KICK")
+            {
                 CommandKICK(user, message);
+                commandHandled = 1;
+            }
             else if (commandName == "TOPIC")
+            {
                 CommandTOPIC(user, message);
+                commandHandled = 1;
+            }
         }
         else
         {
-            std::string err = "ERROR: Not registered or Command not found\r\n";
-            send(user->getSocket(), err.c_str(), err.length(), 0);
+            if (commandHandled)
+            {
+                std::string err = ":server 451 " + user->getNickname() + " :Not registered\r\n";
+                send(user->getSocket(), err.c_str(), err.length(), 0);
+            }
+            else 
+            {
+                std::string err = ":server 421 " + user->getNickname() + " " + commandName + " :Unknown command\r\n";
+                send(user->getSocket(), err.c_str(), err.length(), 0);
+            }
         }
     }
 }
