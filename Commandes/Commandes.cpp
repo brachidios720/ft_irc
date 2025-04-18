@@ -13,25 +13,6 @@
 #include "../Includes/Server.hpp"
 #include <string>
 
-/*
-void	Server::CommandCAP(User *user)
-{
-(void) user;
-		std::cout << "CAP received" << std::endl;
-};
-*/
-/*
-int	Server::CommandPASS(User *user, std::string &message){
-(void) user;
-std::cout << "NICK received | message : " << message << std::endl;
-
-	return 0;};
-*//*
-void	Server::CommandNICK(User *user, std::string &message)
-{
-	(void) user;
-		std::cout << "NICK received | message : " << message << std::endl;
-};*/
 void	Server::CommandJOIN(User *user, std::string &message)
 {
 	int isFirst = 0;
@@ -120,32 +101,62 @@ void	Server::CommandJOIN(User *user, std::string &message)
 
 	
 };
-/*
-void	Server::CommandUSER(User *user, std::string &message)
+
+void Server::CommandPART(User* user, std::string& message)
 {
-(void) user;
-		std::cout << "USER received | message : " << message << std::endl;
-};*/
-/*
-void	Server::CommandNAMES(User *user, std::string &str)
-{
-	(void) user;
-	std::string msg = "RECEIVED "+ str + "\r\n";
-	send(user->getSocket(), msg.c_str(), msg.length(), 0);
-};*/
-/*
-void	Server::CommandPRIVMSG(User *user, std::string &message)
-{
-	(void) user;
-	std::string msg = "RECEIVED "+ message + "\r\n";
-	send(user->getSocket(), msg.c_str(), msg.length(), 0);
-};*/
-void	Server::CommandPART(User *user, std::string &message)
-{
-(void) user;
-	std::string msg = "RECEIVED "+ message + "\r\n";
-	send(user->getSocket(), msg.c_str(), msg.length(), 0);
-};
+    std::stringstream ss(message);
+    std::string channelname;
+    ss >> channelname;
+
+    std::string optionalMsg;
+    std::getline(ss, optionalMsg); // get rest of the message
+    if (!optionalMsg.empty() && optionalMsg[0] == ':')
+        optionalMsg = optionalMsg.substr(1); // remove leading colon
+
+    if (channelname.empty())
+    {
+        std::string err = ":" + user->getFullMask() + " 461 PART :Not enough parameters\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    Channel* channel = FindChannel(channelname);
+    if (!channel)
+    {
+        std::string err = ":" + user->getFullMask() + " 403 " + channelname + " :No such channel\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    if (!channel->IsHere(user))
+    {
+        std::string err = ":" + user->getFullMask() + " 442 " + channelname + " :You're not on that channel\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    // Compose the PART message with optional message
+    std::string partMsg = ":" + user->getFullMask() + " PART " + channelname;
+    if (!optionalMsg.empty())
+        partMsg += " :" + optionalMsg;
+    partMsg += "\r\n";
+
+    // Broadcast to others
+    channel->broadcast(partMsg);
+
+    // Remove user from the channel
+    channel->DelUser(user);
+
+    // If the channel is now empty, delete it
+    if (channel->getUsers().empty())
+    {
+        ChannelTab.erase(channelname);
+        delete channel;
+    }
+	//std::string confirmationMsg = ":" + user->getFullMask() + " PART " + channelname + " :You have left the channel\r\n";
+    //send(user->getSocket(), confirmationMsg.c_str(), confirmationMsg.length(), 0);
+}
+
 /*void	Server::CommandMODE(User *user, std::string &message)
 {
 (void) user;
@@ -411,6 +422,12 @@ void    Server::CommandPRIVMSG(User *user, std::string &message){
 			return;
 		}
 		else{
+			if(!channel->IsHere(user)){
+				std::string err = ":" + user->getNickname() + "ERROR : you are not in this channel\r\n";
+				std::cout << err << std::endl;
+				send(user->getSocket(), err.c_str(), err.length(), 0);
+				return;
+			}
 			std::string reponse = ":" + user->getNickname() + " PRIVMSG " + target + pvt + "\r\n";
 			std::cout << reponse << std::endl;
 			channel->SendMsg(user, reponse);
@@ -439,40 +456,6 @@ void    Server::CommandPRIVMSG(User *user, std::string &message){
 
 }
 
-/*
-void    Server::CommandPART(User *user, std::string message){
-
-	std::stringstream ss(message);
-	std::string  channelName;
-
-	ss << channelName;
-
-	if(channelName.empty()){
-		std::string rep = ": empty channel name\r\n";
-		send(user->getSocket(), rep.c_str(), rep.length(), 0);
-		return;
-	}
-
-	Channel *channel  = FindChannel(channelName);
-	if(!channel){
-		std::string rep = ": no such channel\r\n";
-		send(user->getSocket(), rep.c_str(), rep.length(), 0);
-		return;
-	}
-
-	if(!channel->IsHere(user)){
-		std::string rep = ": your not in this channel\r\n";
-		send(user->getSocket(), rep.c_str(), rep.length(), 0);
-		return;
-	}
-
-	channel->DelUser(user);
-	user->setChannel("");
-
-	std::string rep = ": " + user->getNickname() + " PART " + channelName + "\r\n";
-	send(user->getSocket(), rep.c_str(), rep.length(), 0);
-}
-*/
 void    Server::CommandMODE(User *user, std::string &message){
 	
 	std::stringstream ss(message);
@@ -585,53 +568,7 @@ void    Server::CommandTOPIC(User *user, std::string &message){
 	std::string reponse = ":" + user->getNickname() + " TOPIC " + channelName  + topic + "\r\n";
 	channel->SendMsg(user, reponse);
 }
-/*
-void Server::CommandINVITE(User *user, std::string &message) {
-    std::stringstream ss(message);
-    std::string nickname, channelname;
-    ss >> nickname >> channelname;
 
-    if (nickname.empty() || channelname.empty()) {
-        std::string err = ":Invalid parameters\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-
-    Channel *channel = FindChannel(channelname);
-    if (!channel) {
-        std::string err = ":No such channel " + channelname + "\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-
-    if (!channel->IsHere(user)) {
-        std::string err = ":You must be in the channel to invite someone\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-
-    if (channel->getMode('i') && !channel->isOp(user->getNickname())) {
-        std::string err = ":You're not channel operator\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-
-    User *targetUser = getUser(nickname);
-    if (!targetUser) {
-        std::string err = ":User not found\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-
-    channel->addUserInvite(targetUser);
-
-    std::string inviteMsg = ":" + user->getFullMask() + " INVITE " + targetUser->getNickname() + " :" + channelname + "\r\n";
-    send(targetUser->getSocket(), inviteMsg.c_str(), inviteMsg.length(), 0);
-
-    std::string confirm = ":You invited " + nickname + " to " + channelname + "\r\n";
-    send(user->getSocket(), confirm.c_str(), confirm.length(), 0);
-}
-*/
 void Server::CommandINVITE(User *user, std::string &message) {
     std::cout << "[DEBUG] CommandINVITE called with message: " << message << std::endl;
 
@@ -689,67 +626,6 @@ void Server::CommandINVITE(User *user, std::string &message) {
     send(user->getSocket(), confirm.c_str(), confirm.length(), 0);
     std::cout << "[DEBUG] Sent confirmation to inviter: " << user->getNickname() << std::endl;
 }
-
-/*
-void    Server::CommandKICK(User *user, std::string message){
-    std::stringstream ss(message);
-    std::string channelname, nickname;
-    ss << channelname << nickname;
-
-    if(channelname.empty()){
-        std::string err = ": no such channel\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-    if(nickname.empty()){
-        std::string err = ": no such nickname\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-
-    Channel *channel = FindChannel(channelname);
-    if(!channel){
-        std::string err = ": no channel with the name : " +channelname + "\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-    if(!channel->IsHere(user)){
-        std::string err = ": you are not a menber of the channel :" +channelname + "\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-    if(!channel->isOp(user->getNickname())){
-        std::string err = ": you are not operator of this channel : " + channelname + "\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-    User *targetUser = nullptr;
-    for (std::map<int, User*>::iterator it = UserTab.begin(); it != UserTab.end(); ++it)
-    {
-        if (it->second->getNickname() == nickname)
-        {
-            targetUser = it->second;
-            break;
-        }
-    }
-    if(!targetUser){
-        std::string err = ":user not found" + nickname + "\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-    if(!channel->IsHere(targetUser)){
-        std::string err =  ": " + targetUser->getNickname() + "is not a menber of the channel :" +channelname + "\r\n";
-        send(user->getSocket(), err.c_str(), err.length(), 0);
-        return;
-    }
-
-    channel->DelUser(targetUser);
-
-    std::string rep = ": the user " + targetUser->getNickname() + " has been kicked of the channel by " + user->getNickname() + "\r\n";
-    channel->SendMsg(user, rep);
-    send(targetUser->getSocket(), rep.c_str(), rep.length(), 0);
-}
-*/
 
 void    Server::CommandKICK(User *user, std::string &message){
 	std::stringstream ss(message);
@@ -842,148 +718,3 @@ void    Server::CommandKICK(User *user, std::string &message){
 
 
 // }
-
-/*
-void 	Server::ModeK(User *user, Channel *channel, std::string message, int i){
-	if(i == 1){
-		if(message.empty()){
-			std::string err = "Error: Pasword required\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		channel->SetPassword(message);
-		std::string rep = ": password set\r\n";
-		send(user->getSocket(), rep.c_str(), rep.length(), 0);
-	}
-	else{
-		channel->SetPassword("");
-		std::string rep = ": password unset\r\n";
-		send(user->getSocket(), rep.c_str(), rep.length(), 0);
-	}
-}
-*//*
-void 	Server::ModeI(User *user, Channel *channel, int i){
-	if(i == 1){
-		channel->setInviteOnly(true);
-		std::string mess = "invite only mode activate\r\n";
-		send(user->getSocket(), mess.c_str(), mess.length(), 0);
-	}
-	else{
-		channel->setInviteOnly(false);
-		std::string mess = "invite only mode desacative\r\n";
-		send(user->getSocket(), mess.c_str(), mess.length(), 0);
-	}
-}
-*//*
-void 	Server::ModeO(User *user, Channel *channel, std::string message, int i){
-	std::stringstream ss(message);
-	std::string modes, channelPrint, mode, targetUser;
-	
-	ss << modes << channelPrint << mode << targetUser;
-
-	if(channelPrint.empty() || !mode.empty() || !targetUser.empty()){
-		std::string err = "ERROR: part of the message is incomplet\r\n";
-		send(user->getSocket(), err.c_str(), err.length(), 0);
-		return;
-	}
-	if(!FindChannel(channelPrint)){
-		std::string err = "ERROR: no such channel\r\n";
-		send(user->getSocket(), err.c_str(), err.length(), 0);
-		return;
-	}
-	if(!channel->isOp(user->getNickname())){
-		std::string err = "ERROR: you are not operator\r\n";
-		send(user->getSocket(), err.c_str(), err.length(), 0);
-		return;
-	}
-	// user *target = channel->getStringUser(targetUser);
-	// if(!channel->IsHere(target)){
-	//     std::string err = "ERROR: this user in already not in this channel\r\n";
-	//     send(user->getSocket(), err.c_str(), err.length(), 0);
-	//     return;
-	// }
-	if(i == 1){
-		if(channel->isOp(targetUser)){
-			std::string err = "ERROR: this target user is already operator\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		channel->changeOp(targetUser, 1);
-		std::string mess = ": " + targetUser + " is now already operator of this channel\r\n"; 
-		channel->SendMsg(user, mess);
-	}
-	else{
-		if(!channel->isOp(targetUser)){
-			std::string err = "ERROR: this user is not an operator\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		channel->changeOp(targetUser, 0);
-		std::string mess = ": " + targetUser + " is no longer admin\r\n";
-		channel->SendMsg(user, mess);
-	}
-}
-*/
-/*
-void 	Server::ModeT(User *user, Channel *channel, int i){
-
-	if(!channel->isOp(user->getNickname())){
-		std::string err = "ERROR: you are not an operator in this channel\r\n";
-		send(user->getSocket(), err.c_str(), err.length(), 0);
-		return;
-	}
-	if(i == 1){
-		if(channel->isTopicRestricted()){
-			std::string err = " ERROR: channel is already topic restricted\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		std::string mess = ": the Topic is now restricted\r\n";
-		channel->setTopicRestricted(true);
-		channel->SendMsg(user, mess);
-	}
-	else{
-		if(!channel->isTopicRestricted()){
-			std::string err = "ERROR: the channel is already not topic restricted\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		std::string mess = ": the Topic is now unrestricted\r\n";
-		channel->setTopicRestricted(false);
-		channel->SendMsg(user, mess);
-	}
-}
-*//*
-void 	Server::ModeL(User *user, Channel *channel, std::string message, int i){
-
-	if(!channel->isOp(user->getNickname())){
-		std::string err = "ERROR: you are not a channel operator\r\n";
-		send(user->getSocket(), err.c_str(), err.length(), 0);
-		return;
-	}
-	if(i == 1){
-		std::istringstream iss(message);
-		int limit;
-		iss >> limit;
-
-		if(limit <= 0){
-			std::string err = "ERROR: no limite number\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		std::stringstream ss;
-		ss << "the actualy number limite is now " << limit << "\r\n";
-		std::string mess = ss.str();
-		channel->SetUserLimit(limit);
-		channel->SendMsg(user, mess);
-	}
-	else
-		if(channel->getUserLimite() == -1){
-			std::string err = "ERROR: the userlimite is already unset\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		std::string mess = "there is no actualy userLimite\r\n";
-		channel->SetUserLimit(-1);
-		channel->SendMsg(user, mess);
-}*/

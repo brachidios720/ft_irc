@@ -99,6 +99,16 @@ bool Channel::getMode(char mode)
     return false;
 }
 
+void Channel::broadcast(const std::string& message)
+{
+    std::map<User*, int>::iterator it;
+    for (it = UserBook.begin(); it != UserBook.end(); ++it)
+    {
+        User* user = it->first;
+        send(user->getSocket(), message.c_str(), message.length(), 0);
+    }
+}
+
 std::string Channel::getPassword(void)
 {
     return _password;

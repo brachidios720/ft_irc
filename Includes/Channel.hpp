@@ -36,6 +36,7 @@ class Channel
 		void	setTopicRestricted(bool status);//
 		int		getUserLimite();
 		std::map<User*, int> getUsers();
+		void broadcast(const std::string& message);
 		
 	private :
 		std::string _password;
