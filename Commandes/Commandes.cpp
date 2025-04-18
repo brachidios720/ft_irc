@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Commandes.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
+/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/17 19:08:16 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/18 16:53:07 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,23 @@ void	Server::CommandJOIN(User *user, std::string &message)
 
 	std::string valid = user->getNickname() + " JOIN " + canal + "\r\n";
 	send(user->getSocket(), valid.c_str(), valid.length(), 0); 
+	std::string reponse2 = ":" + user->getNickname() + " JOIN " + canal + "\r\n";
+	channel->SendMsg(user, reponse2);
+	std::map<User*, int> users = channel->getUsers();
+	std::string name_list = ":server 353 " + user->getNickname() + " = " + canal + " :";
+	for (std::map<User*, int>::iterator it = users.begin(); it != users.end(); ++it)
+	{
+		if (it->first != user)
+		{
+			if (channel->isOp(it->first))
+				name_list += "@" + it->first->getNickname() + " ";
+			else
+				name_list += it->first->getNickname() + " ";
+		}
+	}
+	name_list += "\r\n";
+	send(user->getSocket(), name_list.c_str(), name_list.length(), 0);
+	std::string end_list = ":server 366 " + user->getNickname() + " " + canal + " :End of NAMES list\r\n";
 	std::cout << "DEBUG: canal = " << canal << " JOINED" << std::endl;
 	if (channel->getTopic().empty())
 	{
@@ -96,7 +113,7 @@ void	Server::CommandJOIN(User *user, std::string &message)
 	}
 	else
 	{
-		std::string topic = "TOPIC " + canal + " :" + channel->getTopic() + "\r\n";
+		std::string topic = "TOPIC " + canal + channel->getTopic() + "\r\n";
 		send(user->getSocket(), topic.c_str(), topic.length(), 0);
 	}
 
@@ -458,8 +475,8 @@ void    Server::CommandPART(User *user, std::string message){
 void    Server::CommandMODE(User *user, std::string &message){
 	
 	std::stringstream ss(message);
-	std::string target, mode;
-	ss >> target >> mode;
+	std::string target, mode, param;
+	ss >> target >> mode >> param;
 	if(target[0] == ':')
 		target = target.substr(1);
 	if(mode[0] == ':')
@@ -482,8 +499,40 @@ void    Server::CommandMODE(User *user, std::string &message){
 			send(user->getSocket(), err.c_str(), err.length(), 0);
 			return;
 		}
-		channel->SetMode(mode[1], mode[0] == '+');
-	}
+		if (!channel->isOp(user)) {
+			std::string err = ": you are not operator of this channel\r\n";
+			send(user->getSocket(), err.c_str(), err.length(), 0);
+			return;
+		}
+		if (!channel->IsHere(user)){
+			std::string err = ": you are not in this channel\r\n";
+			send(user->getSocket(), err.c_str(), err.length(), 0);
+			return;
+		}
+		if (mode[1] == 'o' && param.empty()){
+			std::string err = ": no such param\r\n";
+			send(user->getSocket(), err.c_str(), err.length(), 0);
+			return;
+		}
+		if (mode[1] == 'o'){
+			User *targetUser = getUser(param);
+			if (!targetUser){
+				std::string err = ": no such user\r\n";
+				send(user->getSocket(), err.c_str(), err.length(), 0);
+				return;
+			}
+			if (mode[0] == '+')
+				channel->changeOp(targetUser, 1);
+			else
+				channel->changeOp(targetUser, 0);
+		}
+		else if (mode[1] == 'k')
+			channel->SetPassword(param);
+		else if (mode[1] == 'i')
+			channel->SetMode(mode[1], mode[0] == '+');
+		else if (mode[1] == 't')
+			channel->SetMode(mode[1], mode[0] == '+');
+	}	
 }
 
 void    Server::CommandTOPIC(User *user, std::string &message){
@@ -521,7 +570,7 @@ void    Server::CommandTOPIC(User *user, std::string &message){
 	}
 	if (topic.empty()) {
 		if (!channel->getTopic().empty()) {
-			std::string rep = user->getNickname() + " " + channelName + " :" + channel->getTopic() + "\r\n";
+			std::string rep = user->getNickname() + " " + channelName + channel->getTopic() + "\r\n";
 			send(user->getSocket(), rep.c_str(), rep.length(), 0);
 		} else {
 			std::string rep = user->getNickname() + " " + channelName + " :No topic is set\r\n";
@@ -532,7 +581,7 @@ void    Server::CommandTOPIC(User *user, std::string &message){
 	channel->setTopic(topic); 
 	std::string rep = ": 332 " + user->getNickname() + " " + channelName + topic + "\r\n";
 	send(user->getSocket(), rep.c_str(), rep.length(), 0);
-	std::string reponse = ":" + user->getNickname() + " TOPIC " + channelName  + " :" + topic + "\r\n";
+	std::string reponse = ":" + user->getNickname() + " TOPIC " + channelName  + topic + "\r\n";
 	channel->SendMsg(user, reponse);
 }
 /*
