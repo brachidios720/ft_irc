@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:27:49 by tlegendr          #+#    #+#             */
-/*   Updated: 2025/04/08 15:30:10 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/17 18:57:11 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,24 +113,23 @@ std::string Channel::getTopic()
 
 void Channel::setTopic(std::string topic)
 {
+    std::cout << "DEBUG: Setting topic to: " << topic << std::endl;
     _topic = topic;
 }
 
-int Channel::isOp(std::string nickname)
+int Channel::isOp(User *user)
 {
-    for (std::map<User *, int>::iterator it = UserBook.begin(); it != UserBook.end(); ++it)
-    {
-        if (it->first->getNickname() == nickname)
-            return it->second;
-    }
+    std::map<User *, int>::iterator it = UserBook.find(user);
+    if (it != UserBook.end())
+        return it->second;
     return 0;
 }
 
-void Channel::changeOp(std::string nickname, int op)
+void Channel::changeOp(User *user, int op)
 {
     for (std::map<User *, int>::iterator it = UserBook.begin(); it != UserBook.end(); ++it)
     {
-        if (it->first->getNickname() == nickname)
+        if (it->first == user)
             it->second = op;
     }
 }

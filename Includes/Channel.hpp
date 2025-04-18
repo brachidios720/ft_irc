@@ -22,8 +22,8 @@ class Channel
 		bool isEmpty();
 		std::string	getTopic();
 		void	setTopic(std::string topic);
-		int isOp(std::string nickname);
-		void changeOp(std::string nickname, int op);
+		int isOp(User *user);
+		void changeOp(User *user, int op);
 		void SetUserLimit(int limit);
 		int getNbUser();
 		bool isPlace();

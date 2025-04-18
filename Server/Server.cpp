@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/16 19:14:36 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/18 14:52:56 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -191,7 +191,7 @@ void Server::parseCommand(const std::vector<std::string> &commands, User *user)
         std::string message;
         std::stringstream ss(commands[i]);
         ss >> commandName;
-        std::cout << "Received command :" << commandName << std::endl;
+        std::cout << "Received command :" << commandName << " from user " << user->getNickname() << std::endl;
         std::getline(ss, message);
         if (commandName == "CAP")
             CommandCAP(user, message);
@@ -215,6 +215,10 @@ void Server::parseCommand(const std::vector<std::string> &commands, User *user)
 			CommandWHOIS(user, message);
 		else if (commandName == "PING")
 			CommandPING(user, message);
+        else if (commandName == "KICK")
+            CommandKICK(user, message);
+        else if (commandName == "TOPIC")
+            CommandTOPIC(user, message);
         else
         {
             std::string err = "ERROR: Command not found\r\n";
