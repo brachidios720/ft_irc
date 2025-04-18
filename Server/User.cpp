@@ -6,7 +6,7 @@
 /*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 23:19:29 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/08 19:02:18 by hehuang          ###   ########.fr       */
+/*   Updated: 2025/04/17 19:08:07 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ std::string	User::getRealName()
 	return this->_realname;
 }
 
-bool	User::getIsRegisted()
+bool	User::getIsRegistered()
 {
 	return this->_isregistered;
 }
@@ -162,6 +162,11 @@ void	User::incrementisDown()
 	this->_isDown++;
 }
 
+
+std::string User::getFullMask() const
+{
+    return this->_nickname + "!" + this->_username + "@" + this->_hostname;
+}
 
 User::~User()
 {

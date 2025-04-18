@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../Includes/Channel.hpp"
+#include "Channel.hpp"
 
 Channel::Channel() : _name(""),  _userLimit(0), _modeK(false), _modeT(false), _modeL(false), _modeI(false), _topicRestricted(false)
 {
@@ -190,4 +191,9 @@ void Channel::setTopicRestricted(bool status)
 int Channel::getUserLimite()
 {
     return _userLimit;
+}
+
+std::map<User*, int> Channel::getUsers()
+{
+    return this->UserBook;
 }

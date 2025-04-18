@@ -19,7 +19,7 @@ class User
 		std::string getbuffCommand(void);
 		std::string getIp(void);
 		std::string	getRealName();
-		bool getIsRegisted();
+		bool getIsRegistered();
 		void setisDown(int down);
 		void setUsername(std::string username);
 		void setNickname(std::string nickname);
@@ -32,6 +32,7 @@ class User
 		void incrementisDown();
 		void setIp(std::string ip);
 		void setIsRegister(bool registered);
+		std::string getFullMask() const;
 	private :
 		int _isDown;
 		const int _socket;

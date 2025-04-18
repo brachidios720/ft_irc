@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/18 14:52:56 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/17 17:44:16 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include "../Includes/User.hpp"
 #include <cstdlib>
 #include <iostream>
+#include <map>
 #include <string>
 
 #define MAX_PORT 65535 
@@ -199,29 +200,34 @@ void Server::parseCommand(const std::vector<std::string> &commands, User *user)
             CommandPASS(user, message);
         else if (commandName == "NICK")
             CommandNICK(user, message);
-        else if (commandName == "JOIN")
-            CommandJOIN(user, message);
         else if (commandName == "USER")
             CommandUSER(user, message);
-        else if (commandName == "NAMES")
-            CommandNAMES(user, message);
-        else if (commandName == "PRIVMSG")
-            CommandPRIVMSG(user, message);
-        else if (commandName == "PART")
-            CommandPART(user, message);
-        else if (commandName == "MODE")
-            CommandMODE(user, message);
-		else if (commandName == "WHOIS" || commandName == "WHOWAS")
-			CommandWHOIS(user, message);
-		else if (commandName == "PING")
-			CommandPING(user, message);
-        else if (commandName == "KICK")
-            CommandKICK(user, message);
-        else if (commandName == "TOPIC")
-            CommandTOPIC(user, message);
+        if (user->getIsRegistered())
+        {
+            if (commandName == "JOIN")
+                CommandJOIN(user, message);
+            else if (commandName == "NAMES")
+                CommandNAMES(user, message);
+            else if (commandName == "PRIVMSG")
+                CommandPRIVMSG(user, message);
+            else if (commandName == "PART")
+                CommandPART(user, message);
+            else if (commandName == "MODE")
+                CommandMODE(user, message);
+            else if (commandName == "WHOIS" || commandName == "WHOWAS")
+                CommandWHOIS(user, message);
+            else if (commandName == "PING")
+                CommandPING(user, message);
+            else if (commandName == "INVITE")
+                CommandINVITE(user, message);
+            else if (commandName == "KICK")
+                CommandKICK(user, message);
+            else if (commandName == "TOPIC")
+                CommandTOPIC(user, message);
+        }
         else
         {
-            std::string err = "ERROR: Command not found\r\n";
+            std::string err = "ERROR: Not registered or Command not found\r\n";
             send(user->getSocket(), err.c_str(), err.length(), 0);
         }
     }
@@ -233,7 +239,13 @@ Server::~Server()
 		close(it->fd);
 	for (std::map<int, User*>::iterator it = UserTab.begin(); it != UserTab.end(); ++it)
 		delete it->second;
-	UserTab.clear();
+    for (std::map<std::string, Channel*>::iterator it = ChannelTab.begin(); it != ChannelTab.end(); ++it)
+    {
+        Channel *channel = it->second;
+        delete channel;
+    }
+    UserTab.clear();
+	ChannelTab.clear();
     delete poll_fds;
 }
 
@@ -246,4 +258,15 @@ Channel	*Server::FindChannel(std::string search)
             return it->second;
     }
     return nullptr;
+}
+
+User	*Server::getUser(std::string &nickname)
+{
+	std::map<int, User *>::iterator it;
+	for (it = this->UserTab.begin(); it != this->UserTab.end(); it ++)
+	{
+		if (it->second->getNickname() == nickname)
+			return (it->second);
+	}
+	return (NULL);
 }

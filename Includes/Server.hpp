@@ -45,6 +45,8 @@ class Server
 		std::map<int, User*> UserTab;
 		std::map<std::string, User*> nicknameMap;
 		std::map<std::string, Channel*> ChannelTab;
+
+		User	*getUser(std::string &nickname);
 		
 		void	HandleMessage(User *user, int num, std::vector<pollfd> client_fds);
 		int		FindCommand(User *user, std::string command);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Commandes.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hehuang <hehuang@student.42lehavre.fr>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/18 15:10:28 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/17 19:08:16 by hehuang          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,7 +167,7 @@ void    Server::CommandNICK(User *user, std::string &message){
 		return;
 	}
 
-	if (!user->getIsRegisted())
+	if (!user->getIsRegistered())
 	{
 		std::string sucess = this->_name + " 001 " + nickname + " :Welcome to the IRC server, " + nickname + "!\r\n";
 		send(user->getSocket(), sucess.c_str(), sucess.length(), 0);
@@ -420,6 +420,7 @@ void    Server::CommandPRIVMSG(User *user, std::string &message){
 	}
 
 }
+
 /*
 void    Server::CommandPART(User *user, std::string message){
 
@@ -534,65 +535,169 @@ void    Server::CommandTOPIC(User *user, std::string &message){
 	std::string reponse = ":" + user->getNickname() + " TOPIC " + channelName  + " :" + topic + "\r\n";
 	channel->SendMsg(user, reponse);
 }
+/*
+void Server::CommandINVITE(User *user, std::string &message) {
+    std::stringstream ss(message);
+    std::string nickname, channelname;
+    ss >> nickname >> channelname;
+
+    if (nickname.empty() || channelname.empty()) {
+        std::string err = ":Invalid parameters\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    Channel *channel = FindChannel(channelname);
+    if (!channel) {
+        std::string err = ":No such channel " + channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    if (!channel->IsHere(user)) {
+        std::string err = ":You must be in the channel to invite someone\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    if (channel->getMode('i') && !channel->isOp(user->getNickname())) {
+        std::string err = ":You're not channel operator\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    User *targetUser = getUser(nickname);
+    if (!targetUser) {
+        std::string err = ":User not found\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    channel->addUserInvite(targetUser);
+
+    std::string inviteMsg = ":" + user->getFullMask() + " INVITE " + targetUser->getNickname() + " :" + channelname + "\r\n";
+    send(targetUser->getSocket(), inviteMsg.c_str(), inviteMsg.length(), 0);
+
+    std::string confirm = ":You invited " + nickname + " to " + channelname + "\r\n";
+    send(user->getSocket(), confirm.c_str(), confirm.length(), 0);
+}
+*/
+void Server::CommandINVITE(User *user, std::string &message) {
+    std::cout << "[DEBUG] CommandINVITE called with message: " << message << std::endl;
+
+    std::stringstream ss(message);
+    std::string nickname, channelname;
+    ss >> nickname >> channelname;
+
+    std::cout << "[DEBUG] Parsed nickname: |" << nickname << "|, channel: |" << channelname << "|" << std::endl;
+
+    if (nickname.empty() || channelname.empty()) {
+        std::cerr << "[ERROR] Missing nickname or channel name" << std::endl;
+        std::string err = ":Invalid parameters\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    Channel *channel = FindChannel(channelname);
+    if (!channel) {
+        std::cerr << "[ERROR] Channel not found: " << channelname << std::endl;
+        std::string err = ":No such channel " + channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    if (!channel->IsHere(user)) {
+        std::cerr << "[ERROR] User not in channel: " << user->getNickname() << std::endl;
+        std::string err = ":You must be in the channel to invite someone\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    if (channel->getMode('i') && !channel->isOp(user)) {
+        std::cerr << "[ERROR] Channel is invite-only and user is not operator: " << user->getNickname() << std::endl;
+        std::string err = ":You're not channel operator\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    User *targetUser = getUser(nickname);
+    if (!targetUser) {
+        std::cerr << "[ERROR] Target user not found: " << nickname << std::endl;
+        std::string err = ":User not found\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+
+    channel->addUserInvite(targetUser);
+    std::cout << "[DEBUG] User " << targetUser->getNickname() << " added to invite list of channel " << channelname << std::endl;
+
+    std::string inviteMsg = ":" + user->getFullMask() + " INVITE " + targetUser->getNickname() + " :" + channelname + "\r\n";
+    send(targetUser->getSocket(), inviteMsg.c_str(), inviteMsg.length(), 0);
+    std::cout << "[DEBUG] Sent invite to " << targetUser->getNickname() << std::endl;
+
+    std::string confirm = ":You invited " + nickname + " to " + channelname + "\r\n";
+    send(user->getSocket(), confirm.c_str(), confirm.length(), 0);
+    std::cout << "[DEBUG] Sent confirmation to inviter: " << user->getNickname() << std::endl;
+}
 
 /*
-void    Server::CommandINVITE(User *user, std::string message){
+void    Server::CommandKICK(User *user, std::string message){
+    std::stringstream ss(message);
+    std::string channelname, nickname;
+    ss << channelname << nickname;
 
-		std::stringstream ss(message);
-		std::string nickname, channelname;
-		ss << nickname << channelname;
+    if(channelname.empty()){
+        std::string err = ": no such channel\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    if(nickname.empty()){
+        std::string err = ": no such nickname\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
 
-		if(channelname.empty()){
-			std::string err = ": no such channel\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		if(nickname.empty()){
-			std::string err = ": no such nickname\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		Channel *channel = FindChannel(channelname);
-		if(!channel){
-			std::string err = ": no channel with the name : " +channelname + "\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		if(channel->getUserLimite() != -1 && channel->getNbUser() == channel->getUserLimite()){
-			std::string err = ": you can't invite this user because the userlimite has been reached\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		if(channel->IsHere(user)){
-			std::string err = ": not valid invitation\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		 User *targetUser = nullptr;
-		for (std::map<int, User*>::iterator it = UserTab.begin(); it != UserTab.end(); ++it)
-		{
-			if (it->second->getNickname() == nickname)
-			{
-				targetUser = it->second;
-				break;
-			}
-		}
-		if(!targetUser){
-			std::string err = ":user not found" + nickname + "\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
-		if((channel->getMode('i') == true) && !channel->isOp(user->getNickname())){
-			std::string err = ": you are not operator of this channel : " + channelname + "\r\n";
-			send(user->getSocket(), err.c_str(), err.length(), 0);
-			return;
-		}
+    Channel *channel = FindChannel(channelname);
+    if(!channel){
+        std::string err = ": no channel with the name : " +channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    if(!channel->IsHere(user)){
+        std::string err = ": you are not a menber of the channel :" +channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    if(!channel->isOp(user->getNickname())){
+        std::string err = ": you are not operator of this channel : " + channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    User *targetUser = nullptr;
+    for (std::map<int, User*>::iterator it = UserTab.begin(); it != UserTab.end(); ++it)
+    {
+        if (it->second->getNickname() == nickname)
+        {
+            targetUser = it->second;
+            break;
+        }
+    }
+    if(!targetUser){
+        std::string err = ":user not found" + nickname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
+    if(!channel->IsHere(targetUser)){
+        std::string err =  ": " + targetUser->getNickname() + "is not a menber of the channel :" +channelname + "\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
 
-		channel->addUserInvite(targetUser);
-		std::string rep = ": " + user->getNickname() + " invite you to join the " + channelname + " channel " + "\r\n";
-		send(targetUser->getSocket(), rep.c_str(), rep.length(), 0);
-		std::string repp = ": " + nickname + " has been received the invitation to the channel : " + channelname + "\r\n"; 
-		send(user->getSocket(), repp.c_str(), repp.length(), 0);
+    channel->DelUser(targetUser);
+
+    std::string rep = ": the user " + targetUser->getNickname() + " has been kicked of the channel by " + user->getNickname() + "\r\n";
+    channel->SendMsg(user, rep);
+    send(targetUser->getSocket(), rep.c_str(), rep.length(), 0);
 }
 */
 
