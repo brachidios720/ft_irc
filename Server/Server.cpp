@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/18 21:48:46 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/18 22:10:28 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,91 +213,52 @@ void Server::parseCommand(const std::vector<std::string> &commands, User *user)
         ss >> commandName;
         std::getline(ss, message);
         std::cout << "Received command :" << commandName << " from user " << user->getNickname() << " Message: " + message << std::endl;
-        if (commandName == "CAP")
-        {
-            CommandCAP(user, message);
-            commandHandled = 1;
-        }
-        else if (commandName == "PASS")
-        {
-            isPassOK = CommandPASS(user, message);
-            commandHandled = 1;
-        }
-        else if (commandName == "NICK")
-        {
-            CommandNICK(user, message);
-            commandHandled = 1;
-        }
-        else if (commandName == "USER")
-        {
-            commandHandled = 1;
-            CommandUSER(user, message);
+        if (commandName == "CAP") {
+            CommandCAP(user, message); commandHandled = 1; continue;
+        } else if (commandName == "PASS") {
+            isPassOK = CommandPASS(user, message); commandHandled = 1; continue;
+        } else if (commandName == "NICK") {
+            CommandNICK(user, message); commandHandled = 1; continue;
+        } else if (commandName == "USER") {
+            CommandUSER(user, message); commandHandled = 1; continue;
         }
         if (user->getIsRegistered())
         {
-            if (commandName == "JOIN")
-            {
-                CommandJOIN(user, message);
-                commandHandled = 1;
-            }
-            else if (commandName == "NAMES")
-            {
-                CommandNAMES(user, message);
-                commandHandled = 1;
-            }
-            else if (commandName == "PRIVMSG")
-            {
-                CommandPRIVMSG(user, message);
-                commandHandled = 1;
-            }
-            else if (commandName == "PART")
-            {
-                CommandPART(user, message);
-                commandHandled = 1;
-            }
-            else if (commandName == "MODE")
-            {
-                CommandMODE(user, message);
-                commandHandled = 1;
-            }
-            else if (commandName == "WHOIS" || commandName == "WHOWAS")
-            {
-                CommandWHOIS(user, message);
-                commandHandled = 1;
-            }
-            else if (commandName == "PING")
-            {
-                CommandPING(user, message);
-                commandHandled = 1;
-            }
-            else if (commandName == "INVITE")
-            {
-                CommandINVITE(user, message);
-                commandHandled = 1;
-            }
-            else if (commandName == "KICK")
-            {
-                CommandKICK(user, message);
-                commandHandled = 1;
-            }
-            else if (commandName == "TOPIC")
-            {
-                CommandTOPIC(user, message);
-                commandHandled = 1;
+            if (commandName == "JOIN") {
+                CommandJOIN(user, message); commandHandled = 1; continue;
+            } else if (commandName == "NAMES") {
+                CommandNAMES(user, message); commandHandled = 1; continue;
+            } else if (commandName == "PRIVMSG") {
+                CommandPRIVMSG(user, message); commandHandled = 1; continue;
+            } else if (commandName == "PART") {
+                CommandPART(user, message); commandHandled = 1; continue;
+            } else if (commandName == "MODE") {
+                CommandMODE(user, message); commandHandled = 1; continue;
+            } else if (commandName == "WHOIS" || commandName == "WHOWAS") {
+                CommandWHOIS(user, message); commandHandled = 1; continue;
+            } else if (commandName == "PING") {
+                CommandPING(user, message); commandHandled = 1; continue;
+            } else if (commandName == "INVITE") {
+                CommandINVITE(user, message); commandHandled = 1; continue;
+            } else if (commandName == "KICK") {
+                CommandKICK(user, message); commandHandled = 1; continue;
+            } else if (commandName == "TOPIC") {
+                CommandTOPIC(user, message); commandHandled = 1; continue;
             }
         }
         else
         {
-            if (commandHandled)
+            if (!commandHandled)
             {
                 std::string err = ":server 451 " + user->getNickname() + " :Not registered\r\n";
                 send(user->getSocket(), err.c_str(), err.length(), 0);
+                continue;
             }
-            else 
-            {
-                std::string err = ":server 421 " + user->getNickname() + " " + commandName + " :Unknown command\r\n";
-                send(user->getSocket(), err.c_str(), err.length(), 0);
-            }
+        }
+        if (!commandHandled)
+        {
+            std::string err = ":server 421 " + user->getNickname() + " " + commandName + " :Unknown command\r\n";
+            send(user->getSocket(), err.c_str(), err.length(), 0);
         }
     }
 }
