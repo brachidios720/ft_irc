@@ -172,6 +172,12 @@ void    Server::CommandPING(User *user, std::string &message)
 
 void    Server::CommandNICK(User *user, std::string &message){
 
+	if (message.empty())
+	{
+		std::string err = ":server 431 " + user->getNickname() + " :No nickname given\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
 	std::string nickname = message.substr(1);
 	std::cout << "NICK received | nickname : '" << nickname << "'" << std::endl;
 	
@@ -196,13 +202,7 @@ void    Server::CommandNICK(User *user, std::string &message){
 		return;
 	}
 
-	if (!user->getIsRegistered())
-	{
-		std::cout << "DEBUG: user is not registered, nickname = '" << nickname << "'" << std::endl;
-		CanRegister(user);
-		//user->setIsRegister(true);
-		//return (user->setIsRegister(true));
-	}
+
 
 	std::string oldNick = user->getNickname();
 	if (!oldNick.empty() && oldNick == user->getNickname()) {
@@ -212,6 +212,13 @@ void    Server::CommandNICK(User *user, std::string &message){
 	this->nicknameMap[nickname] = user;
 	user->setNickname(nickname);
 	user->setIsNickSet(true);
+	if (!user->getIsRegistered())
+	{
+		std::cout << "DEBUG: user is not registered, nickname = '" << nickname << "'" << std::endl;
+		CanRegister(user);
+		//user->setIsRegister(true);
+		//return (user->setIsRegister(true));
+	}
 	std::string success = ":" + oldNick + " NICK :" + nickname + "\r\n";
 	send(user->getSocket(), success.c_str(), success.length(), 0);
 }
@@ -254,6 +261,12 @@ void    Server::CommandUSER(User *user, std::string &message){
 
 int    Server::CommandPASS(User *user, std::string &message){
 
+	if (message.empty())
+	{
+		std::string err = ":server 461 PASS :Not enough parameters\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return 1;
+	}
 	std::string pass = message.substr(1);
 	if(user->getIsRegistered()){
 		std::string errorRegis = "ERROR : You're already on our server\r\n";
@@ -280,6 +293,12 @@ int    Server::CommandPASS(User *user, std::string &message){
 
 void    Server::CommandCAP(User *user, std::string &code){
 	
+	if (code.empty())
+	{
+		std::string err = ":server 461 CAP :Not enough parameters\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
 	std::string subcommand = code.substr(1);
 
 	if(subcommand == "LS"){
@@ -299,6 +318,12 @@ void    Server::CommandCAP(User *user, std::string &code){
 
 void Server::CommandWHOIS(User* user, std::string& nickname)
 {
+	if (nickname.empty())
+	{
+		std::string err = ":server 401 " + user->getNickname() + " :No nickname given\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
 	std::string nick = nickname.substr(1);
 	std::string response;
 	std::map<std::string, User*>::iterator it = this->nicknameMap.find(nick);
@@ -324,6 +349,12 @@ void Server::CommandWHOIS(User* user, std::string& nickname)
 
 
 void    Server::CommandNAMES(User *user, std::string &message){
+	if (message.empty())
+	{
+		std::string err = ":server 461 NAMES :Not enough parameters\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
 	std::string channelName = message.substr(1);
 	if(channelName[0] == ':')
 		channelName = channelName.substr(1);
@@ -358,7 +389,19 @@ void    Server::CommandPRIVMSG(User *user, std::string &message){
 	std::string target, pvt;
 
 	ss >> target;
+	if (target.empty())
+	{
+		std::string err = ":server 411 " + user->getNickname() + " :No recipient given\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
 	std::getline(ss, pvt);
+	if (pvt.empty())
+	{
+		std::string err = ":server 412 " + user->getNickname() + " :No text to send\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
 	if(target[0] == ':')
 		target = target.substr(1);
 	if(pvt[0] == ':')
@@ -423,6 +466,15 @@ void    Server::CommandMODE(User *user, std::string &message){
 	std::stringstream ss(message);
 	std::string target, mode, param;
 	ss >> target >> mode >> param;
+	if (target.empty() || mode.empty())
+	{
+		std::cout << "DEBUG: target = '"<< target << "'" << std::endl;
+		std::cout << "DEBUG: mode = '"<< mode << "'" << std::endl;
+		std::cout << "DEBUG: param = '"<< param << "'" << std::endl;
+		std::string err = ":server 461 MODE :Not enough parameters\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
 	if(target[0] == ':')
 		target = target.substr(1);
 	if(mode[0] == ':')
@@ -486,6 +538,12 @@ void    Server::CommandMODE(User *user, std::string &message){
 void    Server::CommandTOPIC(User *user, std::string &message){
 	std::cout << "DEBUG:: TOPIC received | message : '" << message << "'" << std::endl;
 	std::cout << "DEBUG:: user : " + user->getNickname() << std::endl;
+	if (message.empty())
+	{
+		std::string err = ":server 461 TOPIC :Not enough parameters\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
 	if (message[0] == ':')
 		message = message.substr(1);
 	std::stringstream ss(message);
@@ -595,6 +653,12 @@ void    Server::CommandKICK(User *user, std::string &message){
 	std::stringstream ss(message);
 	std::string channelname, nickname;
 	ss >> channelname >> nickname;
+	if (channelname.empty() || nickname.empty())
+	{
+		std::string err = ":server 461 KICK :Not enough parameters\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
 	if(channelname[0] == ':')
 		channelname = channelname.substr(1);
 	if(nickname[0] == ':')

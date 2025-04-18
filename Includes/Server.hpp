@@ -72,13 +72,6 @@ class Server
 		void	CommandQUIT(User *user, std::string &message);
 		void	CommandWHOIS(User *user, std::string &message);
 		void	CanRegister(User *user);
-/*
-		void 	ModeK(User *user, Channel *channel, std::string message, int i);//
-		void 	ModeI(User *user, Channel *channel, int i);//
-		void 	ModeO(User *user, Channel *channel, std::string message, int i);//
-		void 	ModeT(User *user, Channel *channel, int i);//
-		void 	ModeL(User *user, Channel *channel, std::string message, int i);
-*/
 
 //		COMMAND UTILS
 		bool	isNickAvailable(const std::string& nickname);

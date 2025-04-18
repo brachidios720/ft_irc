@@ -41,6 +41,7 @@ void Channel::AddUser(User *user, std::string mdp, int super)
 void Channel::DelUser(User *user)
 {
     UserBook.erase(user);
+    UserInvite.erase(std::remove(UserInvite.begin(), UserInvite.end(), user), UserInvite.end());
 }
 
 std::string Channel::getStringUser(std::string name)
