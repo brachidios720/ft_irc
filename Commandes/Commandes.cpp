@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/19 14:38:57 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/19 18:29:23 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -284,19 +284,19 @@ int    Server::CommandPASS(User *user, std::string &message){
 	}
 	std::string pass = message.substr(1);
 	if(user->getIsRegistered()){
-		std::string errorRegis = "ERROR : You're already on our server\r\n";
+		std::string errorRegis = ":server 462 " + user->getNickname() + " :You may not reregister\r\n";
 		send(user->getSocket(), errorRegis.c_str(), errorRegis.length(), 0);
 		return 1;
 	}
 
 	if(pass.empty()){   
-		std::string errorPass = "ERROR : pass is empty\r\n";
+		std::string errorPass = ":server 461 PASS :Not enough parameters\r\n";
 		send(user->getSocket(), errorPass.c_str(), errorPass.length(), 0);
 		return 1;
 	}
 	
 	if(pass != this->_password){
-		std::string badPass = "ERROR : bad password\r\n";
+		std::string badPass = ":server 464 " + user->getNickname() + " :Password incorrect\r\n";
 		send(user->getSocket(), badPass.c_str(), badPass.length(), 0);
 		return 1;
 	}
@@ -440,7 +440,7 @@ void    Server::CommandPRIVMSG(User *user, std::string &message){
 		}
 		else{
 			if(!channel->IsHere(user)){
-				std::string err = ":" + user->getNickname() + "ERROR : you are not in this channel\r\n";
+				std::string err = ":server 404 " + user->getNickname() + " " + target + " :You're not on that channel\r\n";
 				std::cout << err << std::endl;
 				send(user->getSocket(), err.c_str(), err.length(), 0);
 				return;
