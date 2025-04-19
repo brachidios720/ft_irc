@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/18 22:10:28 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/19 14:35:55 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ Server::Server(){
 
 
 Server::Server(std::string const &port, std::string const &password)
-	:_password(password), _name(":myIRC"), numConnection(0)
+	:_password(password), _name("server"), numConnection(0)
 {
 	if (isValidPort(port))
 	{

@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/18 22:50:18 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/19 14:38:57 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ void	Server::CommandJOIN(User *user, std::string &message)
 		send(user->getSocket(), err.c_str(), err.length(), 0);
 		return;
 	}
-	if(!channel->getPassword().empty()){
+	if(channel->getMode('k')){
 		if(mdp.empty() || channel->getPassword() != mdp){
 			std::string mpdError = ":server 475 " + user->getNickname() + " " + canal + " :Invalid password\r\n";
 			send(user->getSocket(), mpdError.c_str(), mpdError.length(), 0);
@@ -165,8 +165,23 @@ void Server::CommandPART(User* user, std::string& message)
 
 void    Server::CommandPING(User *user, std::string &message)
 {
-	std::string server = message.substr(5);
-	std::string pong = ":PONG " + message + "\r\n";
+	if (message.empty())
+	{
+		std::string err = ":server 461 PING :Not enough parameters\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
+	else if (message[0] == ':')
+		message = message.substr(1);
+	std::string server = message.substr(1);
+	if (server.empty())
+	{
+		std::string err = ":server 461 PING :Not enough parameters\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
+	std::cout << "PING received | server : '" << server << "'" << std::endl;
+	std::string pong = ":server PONG " + server + "\r\n";
 	send(user->getSocket(), pong.c_str(), pong.length(), 0);
 }
 
@@ -183,14 +198,14 @@ void    Server::CommandNICK(User *user, std::string &message){
 	
 	if(nickname.empty()){
 		std::cout << "empty nick" << std::endl;
-		std::string errorMessage = "ERROR :Nickname cannot be empty\r\n";
+		std::string errorMessage = ":server 431 " + user->getNickname() + " :No nickname given\r\n";
 		std::cout << "username = " << nickname << std::endl;
 		send(user->getSocket(), errorMessage.c_str(), errorMessage.length(), 0);
 		return;
 	}
 
 	if(nickname.length() > 9 || nickname.length() < 3 || !isalpha(nickname[0])){
-		std::string errorFormat = "ERROR :Nickname have norme error(start with letter and size between 3 and 9)\r\n";
+		std::string errorFormat = ":server 432 " + user->getNickname() + " " + nickname + " :Erroneous nickname\r\n";
 		send(user->getSocket(), errorFormat.c_str(), errorFormat.length(), 0);
 		return;
 	}
