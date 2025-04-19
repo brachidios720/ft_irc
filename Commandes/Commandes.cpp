@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/19 18:29:23 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/19 18:45:50 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,12 @@ void	Server::CommandJOIN(User *user, std::string &message)
 			send(user->getSocket(), mpdError.c_str(), mpdError.length(), 0);
 			return;
 		}
+	}
+	if (channel->isPlace() == false)
+	{
+		std::string err = ":server 471 " + user->getNickname() + " " + canal + " :Cannot join channel (+l)\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
 	}
 	std::string reponse = "Welcome to the channel " + canal + "\r\n";
 	send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
@@ -544,6 +550,21 @@ void    Server::CommandMODE(User *user, std::string &message){
 			channel->SetMode(mode[1], mode[0] == '+');
 		else if (mode[1] == 't')
 			channel->SetMode(mode[1], mode[0] == '+');
+		else if (mode[1] == 'l') {
+			if (param.empty()){
+				std::string err = ": no such param\r\n";
+				send(user->getSocket(), err.c_str(), err.length(), 0);
+				return;
+			}
+			int limit = std::atoi(param.c_str());
+			if (limit < 0){
+				std::string err = ": limit must be positive\r\n";
+				send(user->getSocket(), err.c_str(), err.length(), 0);
+				return;
+			}
+			channel->SetMode(mode[1], mode[0] == '+');
+			channel->SetUserLimit(limit);
+		}
 	}	
 }
 
