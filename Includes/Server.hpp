@@ -58,7 +58,6 @@ class Server
 		int		CommandPASS(User *user, std::string &pass);
 		void	CommandNICK(User *user, std::string &message);
 		void	CommandJOIN(User *user, std::string &message);
-		void 	CommandJOIN2(User *user, std::string &nameChannel, std::string &mdp);
 		void	CommandUSER(User *user, std::string &message);
 		void	CommandNAMES(User *user, std::string &channel);//CommandNAMES(User *user, Channel *channel);/
 		void	CommandPRIVMSG(User *user, std::string &message);

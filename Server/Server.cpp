@@ -167,6 +167,17 @@ void Server::serverLoop()
                 if (bytes <= 0) {
                     std::cout << "Client fd " << poll_fds->at(i).fd << " disconnected." << std::endl;
                     close(poll_fds->at(i).fd);
+                    User *user = UserTab[poll_fds->at(i).fd];
+                    UserTab.erase(poll_fds->at(i).fd);
+                    nicknameMap.erase(user->getNickname());
+                    for (std::map<std::string, Channel *>::iterator it = ChannelTab.begin(); it != ChannelTab.end(); ++it)
+                    {
+                        Channel *channel = it->second;
+                        channel->SendMsg(user, ":" + user->getNickname() + " QUIT " + channel->getName() + "\r\n");
+                        channel->DelUser(user);
+                    }
+                    delete user;
+
                     poll_fds->erase(poll_fds->begin() + i);
                     i--; // Adjust index after removal
                     continue;
@@ -221,6 +232,8 @@ void Server::parseCommand(const std::vector<std::string> &commands, User *user)
             CommandNICK(user, message); commandHandled = 1; continue;
         } else if (commandName == "USER") {
             CommandUSER(user, message); commandHandled = 1; continue;
+        }else if (commandName == "QUIT") {
+            CommandQUIT(user, message); commandHandled = 1; continue;
         }
         if (user->getIsRegistered())
         {

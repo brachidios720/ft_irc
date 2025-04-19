@@ -70,7 +70,7 @@ void	Server::CommandJOIN(User *user, std::string &message)
 
 	std::string valid = user->getNickname() + " JOIN " + canal + "\r\n";
 	send(user->getSocket(), valid.c_str(), valid.length(), 0); 
-	std::string reponse2 = ":" + user->getNickname() + " JOIN " + canal + "\r\n";
+	std::string reponse2 = ":" + user->getFullMask() + " JOIN " + canal + "\r\n";
 	channel->SendMsg(user, reponse2);
 	std::map<User*, int> users = channel->getUsers();
 	std::string name_list = ":server 353 " + user->getNickname() + " = " + canal + " :";
@@ -79,9 +79,9 @@ void	Server::CommandJOIN(User *user, std::string &message)
 		if (it->first != user)
 		{
 			if (channel->isOp(it->first))
-				name_list += "@" + it->first->getNickname() + " ";
+				name_list += "@" + it->first->getFullMask() + " ";
 			else
-				name_list += it->first->getNickname() + " ";
+				name_list += it->first->getFullMask() + " ";
 		}
 	}
 	name_list += "\r\n";
@@ -363,39 +363,36 @@ void Server::CommandWHOIS(User* user, std::string& nickname)
 
 
 
-void    Server::CommandNAMES(User *user, std::string &message){
-	if (message.empty())
-	{
-		std::string err = ":server 461 NAMES :Not enough parameters\r\n";
-		send(user->getSocket(), err.c_str(), err.length(), 0);
-		return;
-	}
-	std::string channelName = message.substr(1);
-	if(channelName[0] == ':')
-		channelName = channelName.substr(1);
-	if(channelName.empty()){
-		std::string err = ": no such channel\r\n";
-		send(user->getSocket(), err.c_str(), err.length(), 0);
-		return;
-	}
-	Channel *channel = FindChannel(channelName);
-	if(!channel){
-		std::string reponse = ":channel not found\r\n";
-		send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
-		return;
-	}
+void Server::CommandNAMES(User *user, std::string &message) {
+    if (message.empty()) {
+        std::string err = ":server 461 " + user->getNickname() + " NAMES :Not enough parameters\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
 
-	std::string reponse = ": " + channel->getName() + " user : ";
-	std::vector<std::string> nicknames = channel->getUserNicknames();
-	for(std::vector<std::string>::iterator it = nicknames.begin(); it != nicknames.end(); ++it){
-		reponse += *it + " ";
-	}
-	reponse = "\r\n";
+    std::string channelName = message;
+	channelName = channelName.substr(1);
+	std::cout << "message : " <<channelName << std::endl;
+    if (channelName[0] == ':')
+        channelName = channelName.substr(1);
+    Channel *channel = FindChannel(channelName);
+    if (!channel) {
+        std::string err = ":server 403 " + user->getNickname() + " " + channelName + " :No such channel\r\n";
+        send(user->getSocket(), err.c_str(), err.length(), 0);
+        return;
+    }
 
-	send(user->getSocket(), reponse.c_str(), reponse.length(), 0);
+    std::string response = ":server 353 " + user->getNickname() + " = " + channel->getName() + " :";
+    std::vector<std::string> nicknames = channel->getUserNicknames();
+    for (std::vector<std::string>::iterator it = nicknames.begin(); it != nicknames.end(); ++it) {
+        response += *it + " ";
+    }
+    response += "\r\n";
 
-	std::string listefinish = channel->getName() + "end of the liste\r\n";
-	send(user->getSocket(), listefinish.c_str(), listefinish.length(), 0);
+    send(user->getSocket(), response.c_str(), response.length(), 0);
+
+    std::string endOfList = ":server 366 " + user->getNickname() + " " + channel->getName() + " :End of /NAMES list.\r\n";
+    send(user->getSocket(), endOfList.c_str(), endOfList.length(), 0);
 }
 
 void    Server::CommandPRIVMSG(User *user, std::string &message){
@@ -734,30 +731,42 @@ void    Server::CommandKICK(User *user, std::string &message){
 	send(targetUser->getSocket(), rep2.c_str(), rep2.length(), 0);
 }
 
-// void    Server::CommandQUIT(User *user, std::string message){
+void Server::CommandQUIT(User *user, std::string &message) {
+    std::string quitMsg = "Client Quit";
 
-//     std::stringstream ss(message);
-//     std::string mess;
-//     ss << mess;
+    // Correct parsing of the message
+    if (!message.empty()) {
+        if (message[0] == ':')
+            quitMsg = message.substr(1);
+        else
+            quitMsg = message;
+    }
 
-//     std::string quitmess = "client quit";
-//     if(mess.empty()){
-//         quitmess = mess.substr(1);
-//     }
+    std::string disconnectMsg = ":" + user->getFullMask() + " QUIT :" + quitMsg + "\r\n";
 
-//     std::string disconnectMess = ":" + user->getGetNick() + " QUIT " + quitmess + "\r\n";
+    // Notify all channels the user is part of
+    for (std::map<std::string, Channel*>::iterator it = ChannelTab.begin(); it != ChannelTab.end(); ++it) {
+        Channel* channel = it->second;
 
-//     for(std::map<std::string, Channel*>::iterator it = ChannelTab.begin();it != ChannelTab.end(); ++it){
-//         Channel *channel = it->second;
+        if (channel->IsHere(user)) {
+            channel->SendMsg(user, disconnectMsg); // send QUIT msg to other users
+            channel->DelUser(user);                // remove user from the channel
+        }
+    }
 
-//         if(channel->IsHere(user)){
-//             channel->SendMsg(user, disconnectMess);
-//             channel->DelUser(user);
-//         }
-//     }
+    // Send QUIT to the user themselves (optional)
+    send(user->getSocket(), disconnectMsg.c_str(), disconnectMsg.length(), 0);
 
-//     send(user->getSocket, disconnectMess.c_str(), disconnectMess.lenght(), 0);
-//     RemoveUser(user->)
-
-
-// }
+    // Close and remove user
+	for (size_t i = 1; i < poll_fds->size(); i++){
+		if (poll_fds->at(i).fd == user->getSocket()){
+			poll_fds->erase(poll_fds->begin() + i);
+			break;
+		}
+	}
+    close(user->getSocket());
+	UserTab.erase(user->getSocket());
+	nicknameMap.erase(user->getNickname());
+    delete(user);
+	
+}
