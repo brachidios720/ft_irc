@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/19 14:35:55 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/19 17:36:11 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,6 +132,8 @@ void Server::serverLoop()
 {
 	// Main event loop
     std::cout << "Entering main event loop. Press CTRL+C to exit." << std::endl;
+
+    std::map<int, std::string> partialBuffers;
     while (!Stop) {
         int ret = poll(poll_fds->data(), poll_fds->size(), -1);
         if (ret < 0) {
@@ -182,11 +184,29 @@ void Server::serverLoop()
                     i--; // Adjust index after removal
                     continue;
                 }
+                //if CRLF is not found, buffer is not null terminated and buffer is saved in partial_buffer
                 buffer[bytes] = '\0';
+                partialBuffers[poll_fds->at(i).fd] += buffer; // Append to partial buffer
 
-                std::cout << "Received from client fd " << poll_fds->at(i).fd << ": |" << buffer << "|" << std::endl;
+                std::string& fullBuffer = partialBuffers[poll_fds->at(i).fd];
+                size_t pos;
+
+                //std::cout << "DEBUG: Received data from fd PARTIAL" << poll_fds->at(i).fd << ": |" << buffer << "|" << std::endl;
+                //std::cout << "DEBUG: Partial buffer size: " << fullBuffer.size() << std::endl;
+                //std::cout << "DEBUG: Partial buffer content: |" << fullBuffer << "|" << std::endl;
+                // Extract complete lines ending with \r\n
+                while ((pos = fullBuffer.find("\r\n")) != std::string::npos) {
+                    std::string command = fullBuffer.substr(0, pos);
+                    fullBuffer.erase(0, pos + 2); // remove processed command
+
+                    std::cout << "Received command from fd " << poll_fds->at(i).fd << ": |" << command << "|" << std::endl;
+                    User* callingUser = UserTab[poll_fds->at(i).fd];
+                    parseCommand(splitByCRLF(command), callingUser);
+                }
+
+                /*std::cout << "Received from client fd " << poll_fds->at(i).fd << ": |" << buffer << "|" << std::endl;
                 User *callingUser = UserTab[poll_fds->at(i).fd];
-                parseCommand(splitByCRLF(buffer), callingUser);
+                parseCommand(splitByCRLF(buffer), callingUser);*/
                 
                 //write(poll_fds->at(i).fd, RESPONSE TO USER, RESPONSE SIZE); RESPONSE BACK TO USER IF NEEDED
             }
