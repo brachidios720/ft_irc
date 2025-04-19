@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 21:59:20 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/19 17:36:11 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/19 18:14:18 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -194,6 +194,20 @@ void Server::serverLoop()
                 //std::cout << "DEBUG: Received data from fd PARTIAL" << poll_fds->at(i).fd << ": |" << buffer << "|" << std::endl;
                 //std::cout << "DEBUG: Partial buffer size: " << fullBuffer.size() << std::endl;
                 //std::cout << "DEBUG: Partial buffer content: |" << fullBuffer << "|" << std::endl;
+                //print all char including \n \r \t \0
+                /*std::cout << "DEBUG: Partial buffer content: ";
+                for (size_t j = 0; j < fullBuffer.size(); j++)
+                {
+                    if (fullBuffer[j] == '\n')
+                        std::cout << "\\n";
+                    else if (fullBuffer[j] == '\r')
+                        std::cout << "\\r";
+                    else if (fullBuffer[j] == '\t')
+                        std::cout << "\\t";
+                    else
+                        std::cout << fullBuffer[j];
+                }
+                std::cout << std::endl;*/
                 // Extract complete lines ending with \r\n
                 while ((pos = fullBuffer.find("\r\n")) != std::string::npos) {
                     std::string command = fullBuffer.substr(0, pos);
