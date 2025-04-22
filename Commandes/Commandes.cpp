@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/22 15:27:26 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/22 15:51:00 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -580,7 +580,33 @@ void    Server::CommandMODE(User *user, std::string &message){
 				channel->SetUserLimit(0);
 				return;
 			}
+
+			bool isValidNumber = true;
+			const std::string maxIntStr = "2147483647";
+
+			for (size_t i = 0; i < param.length(); ++i) {
+				if (param[i] < '0' || param[i] > '9') {
+					isValidNumber = false;
+					break;
+				}
+			}
+
+			if (!param.empty() && isValidNumber) {
+				if (param.length() > 10) {
+					isValidNumber = false;
+				} else if (param.length() == 10 && param > maxIntStr) {
+					isValidNumber = false;
+				}
+			}
+
+			if (!isValidNumber) {
+				std::string err = "ERROR :Invalid or out-of-range number input for limit\r\n";
+				send(user->getSocket(), err.c_str(), err.length(), 0);
+				return;
+			}
+
 			int limit = std::atoi(param.c_str());
+			std::cout << "DEBUG: limit set to = " << limit << std::endl;
 			if (limit < 0){
 				std::string err = "ERROR :Limit must be a positive number\r\n";
 				send(user->getSocket(), err.c_str(), err.length(), 0);
