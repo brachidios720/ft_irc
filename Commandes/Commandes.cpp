@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/19 18:45:50 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/22 15:27:26 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,21 +22,29 @@ void	Server::CommandJOIN(User *user, std::string &message)
 	ss >> canal;
 	ss >> mdp;
 
-	if(canal[0] != '#' && canal[0] != '&'){
-		std::cout << "DEBUG: canal = " << canal << " ERROR: Channel name norme error" << std::endl;
-		std::string normErr = "ERROR :Channel name norme error\r\n";
-		send(user->getSocket(), normErr.c_str(), normErr.length(), 0);
+	
+	if (canal.empty()){
+		std::cout << "DEBUG: canal = " << canal << " ERROR: canal name empty" << std::endl;
+		std::string empty = ":server 461 JOIN :Not enough parameters\r\n";
+		send(user->getSocket(), empty.c_str(), empty.length(), 0);
 		return;
 	}
-	if(canal.empty()){
-		std::cout << "DEBUG: canal = " << canal << " ERROR: canal name empty" << std::endl;
-		std::string empty = "ERROR :Channel cannot be empty\r\n";
-		send(user->getSocket(), empty.c_str(), empty.length(), 0);
+	if (canal.length() == 1)
+	{
+		std::cout << "DEBUG: canal = " << canal << " ERROR: canal name too short" << std::endl;
+		std::string toShort = ":server 403 " + user->getNickname() + " " + canal + " :No such channel\r\n";
+		send(user->getSocket(), toShort.c_str(), toShort.length(), 0);
+		return;
+	}
+	if (canal[0] != '#' && canal[0] != '&') {
+		std::cout << "DEBUG: canal = " << canal << " ERROR: Channel name norme error" << std::endl;
+		std::string normErr = ":server 403 " + user->getNickname() + " " + canal + " :No such channel\r\n";
+		send(user->getSocket(), normErr.c_str(), normErr.length(), 0);
 		return;
 	}
 	if(canal.length() > 32){
 		std::cout << "DEBUG: canal = " << canal << " ERROR: canal name too long" << std::endl;
-		std::string toHigh = "ERROR :Channel size to big\r\n";
+		std::string toHigh = "ERROR : Channel name too long\r\n";
 		send(user->getSocket(), toHigh.c_str(), toHigh.length(), 0);
 		return;
 	}
@@ -96,7 +104,7 @@ void	Server::CommandJOIN(User *user, std::string &message)
 	std::cout << "DEBUG: canal = " << canal << " JOINED" << std::endl;
 	if (channel->getTopic().empty())
 	{
-		std::string topic = "No topic set\r\n";
+		std::string topic = ":server 331 " + user->getNickname() + " " + canal + " :No topic is set\r\n";
 		send(user->getSocket(), topic.c_str(), topic.length(), 0);
 	}
 	else
@@ -507,33 +515,43 @@ void    Server::CommandMODE(User *user, std::string &message){
 			send(user->getSocket(), err.c_str(), err.length(), 0);
 			return;
 	}
+	if (mode.length() == 2 && (mode[0] == '+' || mode[0] == '-') && (mode[1] == 'o' || mode[1] == 'k' || mode[1] == 'i' || mode[1] == 't' || mode[1] == 'l'))
+	{
+		std::cout << "DEBUG: Mode = " << mode << std::endl;
+	}
+	else {
+		std::string err = ":server 472 " + user->getNickname() + " " + target + " :Unknown mode\r\n";
+		send(user->getSocket(), err.c_str(), err.length(), 0);
+		return;
+	}
+	std::cout << "DEBUG: Mode size = " << mode.size() << std::endl;
 
 	if(target[0] == '#'){
 		Channel *channel = FindChannel(target);
 		if(!channel){
-			std::string err = ": no such channel\r\n";
+			std::string err = ":server 403 " + user->getNickname() + " " + target + " :No such channel\r\n";
 			send(user->getSocket(), err.c_str(), err.length(), 0);
 			return;
 		}
 		if (!channel->isOp(user)) {
-			std::string err = ": you are not operator of this channel\r\n";
+			std::string err = ":server 482 " + user->getNickname() + " " + target + " :You're not channel operator\r\n";
 			send(user->getSocket(), err.c_str(), err.length(), 0);
 			return;
 		}
 		if (!channel->IsHere(user)){
-			std::string err = ": you are not in this channel\r\n";
+			std::string err = ":server 442 " + user->getNickname() + " " + target + " :You're not on that channel\r\n";
 			send(user->getSocket(), err.c_str(), err.length(), 0);
 			return;
 		}
 		if (mode[1] == 'o' && param.empty()){
-			std::string err = ": no such param\r\n";
+			std::string err = ":server 461 MODE :Not enough parameters\r\n";
 			send(user->getSocket(), err.c_str(), err.length(), 0);
 			return;
 		}
 		if (mode[1] == 'o'){
 			User *targetUser = getUser(param);
 			if (!targetUser){
-				std::string err = ": no such user\r\n";
+				std::string err = ":server 401 " + user->getNickname() + " " + param + " :No such nick/channel\r\n";
 				send(user->getSocket(), err.c_str(), err.length(), 0);
 				return;
 			}
@@ -544,26 +562,36 @@ void    Server::CommandMODE(User *user, std::string &message){
 		}
 		else if (mode[1] == 'k') {
 			channel->SetMode(mode[1], mode[0] == '+');
-			channel->SetPassword(param);
+			if (!param.empty())
+				channel->SetPassword(param);
 		}
 		else if (mode[1] == 'i')
 			channel->SetMode(mode[1], mode[0] == '+');
 		else if (mode[1] == 't')
 			channel->SetMode(mode[1], mode[0] == '+');
 		else if (mode[1] == 'l') {
-			if (param.empty()){
-				std::string err = ": no such param\r\n";
+			if (param.empty() && mode[0] == '+'){
+				std::string err = ":server 461 MODE :Not enough parameters\r\n";
 				send(user->getSocket(), err.c_str(), err.length(), 0);
+				return;
+			}
+			else if (mode[0] == '-'){
+				channel->SetMode(mode[1], 0);
+				channel->SetUserLimit(0);
 				return;
 			}
 			int limit = std::atoi(param.c_str());
 			if (limit < 0){
-				std::string err = ": limit must be positive\r\n";
+				std::string err = "ERROR :Limit must be a positive number\r\n";
 				send(user->getSocket(), err.c_str(), err.length(), 0);
 				return;
 			}
-			channel->SetMode(mode[1], mode[0] == '+');
+			channel->SetMode(mode[1], 1);
 			channel->SetUserLimit(limit);
+		}
+		else {
+			std::string err = ":server 472 " + user->getNickname() + " " + target + " :Unknown mode\r\n";
+			send(user->getSocket(), err.c_str(), err.length(), 0);
 		}
 	}	
 }
