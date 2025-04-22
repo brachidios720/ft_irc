@@ -6,7 +6,7 @@
 /*   By: tlegendr <tlegendr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/09 17:44:33 by hehuang           #+#    #+#             */
-/*   Updated: 2025/04/22 15:51:00 by tlegendr         ###   ########.fr       */
+/*   Updated: 2025/04/22 17:11:07 by tlegendr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,7 @@ void	Server::CommandJOIN(User *user, std::string &message)
 	user->setChannel(canal);
 	channel->AddUser(user, mdp, isFirst);
 
-	std::string valid = user->getNickname() + " JOIN " + canal + "\r\n";
+	std::string valid = ":" + user->getNickname() + " JOIN " + canal + "\r\n";
 	send(user->getSocket(), valid.c_str(), valid.length(), 0); 
 	std::string reponse2 = ":" + user->getFullMask() + " JOIN " + canal + "\r\n";
 	channel->SendMsg(user, reponse2);
